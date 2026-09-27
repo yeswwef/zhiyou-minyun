@@ -1,0 +1,120 @@
+// 智游闽韵 · 数据模型（空壳版）
+// 依据《搭建步骤书 v1》2.3 节：先建「账号 + 文旅资源 + 收藏 + 问答历史」四类核心表。
+// 后续模块（行程 / 票务 / 商品 / 社区 / 非遗）的表，等你确认需求后再逐步加。
+
+generator client {
+  // Prisma 7 推荐的生成器（旧的 prisma-client-js 已废弃）
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  // Prisma 7 起连接串写在 prisma7.config.ts 引用的 .env 里，schema 中不写 url
+  provider = "mysql"
+}
+
+// ---------- 枚举 ----------
+
+enum Role {
+  C // C 端游客
+  B // B 端商户 / 非遗传承人
+}
+
+enum ResourceType {
+  SCENIC // 景点
+  FOOD // 美食
+  ICH // 非遗
+}
+
+// ---------- 账号 ----------
+
+model User {
+  id           String        @id @default(cuid())
+  username     String        @unique
+  nickname     String?
+  passwordHash String
+  role         Role          @default(C)
+  merchantName String? // B 端店铺名
+  createdAt    DateTime      @default(now())
+  favorites    Favorite[]
+  chatSessions ChatSession[]
+}
+
+// ---------- 文旅资源 ----------
+
+model Resource {
+  id          String        @id @default(cuid())
+  type        ResourceType
+  title       String
+  summary     String        @db.Text
+  description String?       @db.Text
+  history     String?       @db.Text
+  openTime    String?
+  traffic     String?
+  address     String?
+  lat         Float?
+  lng         Float?
+  goodFor     String?
+  source      String // 资料来源（需求要求素材必须可溯源）
+  license     String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  tags        ResourceTag[]
+  favorites   Favorite[]
+
+  @@index([type])
+}
+
+model Tag {
+  id        String        @id @default(cuid())
+  name      String        @unique
+  resources ResourceTag[]
+}
+
+model ResourceTag {
+  resourceId String
+  tagId      String
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  tag        Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([resourceId, tagId])
+}
+
+model Favorite {
+  id         String   @id @default(cuid())
+  userId     String
+  resourceId String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resourceId])
+}
+
+// ---------- RAG 问答历史 ----------
+
+model ChatSession {
+  id        String        @id @default(cuid())
+  userId    String?
+  title     String
+  lang      String        @default("zh")
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  messages  ChatMessage[]
+
+  @@index([userId])
+}
+
+model ChatMessage {
+  id        String      @id @default(cuid())
+  sessionId String
+  role      String // user / assistant
+  content   String      @db.Text
+  citations Json? // [{ resourceId, title, score }]
+  latencyMs Int?
+  createdAt DateTime    @default(now())
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+}

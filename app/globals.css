@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+/* ===== 设计令牌：闽南古厝 + 海丝文化 ===== */
+:root {
+  --brand: #b91c1c; /* 闽南红：主色 */
+  --brand-deep: #7f1d1d; /* 主色 hover */
+  --brand-soft: #fef2f2; /* 主色浅底 */
+  --sea: #0e7490; /* 海丝蓝：次主色 */
+  --earth: #b45309; /* 土楼夯土黄 */
+  --tea: #4d7c0f; /* 岩茶绿 */
+  --paper: #faf9f7; /* 宣纸米白：页面背景 */
+  --surface: #ffffff; /* 卡片 / 浮层 */
+  --ink: #1c1917; /* 墨色文字 */
+  --gold: #c9a24b; /* 描金：分隔 / 奖章 */
+  --background: var(--paper);
+  --foreground: var(--ink);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-soft: var(--brand-soft);
+  --color-sea: var(--sea);
+  --color-earth: var(--earth);
+  --color-tea: var(--tea);
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-gold: var(--gold);
+
+  --font-serif: var(--font-noto-serif);
+  --font-sans: var(--font-noto-sans);
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden; /* NFR-02：移动端不出现横向溢出 */
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    "PingFang SC",
+    "Microsoft YaHei",
+    sans-serif;
+}
+
+input,
+select,
+textarea {
+  font-size: 16px; /* 移动端聚焦不缩放 */
+}
+
+.card {
+  @apply rounded-2xl border border-stone-200 bg-surface p-4 shadow-sm;
+}
+
+.btn {
+  @apply rounded-xl bg-brand px-4 py-2 text-sm font-medium text-white transition hover:bg-brand-deep disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.btn-ghost {
+  @apply rounded-xl border border-stone-300 bg-white px-4 py-2 text-sm text-stone-700 transition hover:bg-stone-100;
+}
+
+.input {
+  @apply w-full rounded-xl border border-stone-300 bg-surface px-3 py-2 text-sm outline-none focus:border-brand;
+}
+
+.tag {
+  @apply rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600;
+}
+
+.tag-brand {
+  @apply rounded-full bg-brand-soft px-2 py-0.5 text-xs text-brand;
+}

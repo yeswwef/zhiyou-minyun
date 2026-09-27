@@ -1,0 +1,16 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "files.eol": "\n",
+  "files.associations": {
+    "*.prisma": "prisma"
+  },
+  "search.exclude": {
+    "**/.next": true,
+    "**/generated": true,
+    "**/.data": true,
+    "**/node_modules": true
+  }
+}

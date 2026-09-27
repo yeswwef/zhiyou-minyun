@@ -1,0 +1,22 @@
+{
+  "folders": [
+    {
+      "name": "智游闽韵 · zhiyou-minyun",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "files.eol": "\n"
+  },
+  "extensions": {
+    "recommendations": [
+      "prisma.prisma",
+      "bradlc.vscode-tailwindcss",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "ms-azuretools.vscode-docker",
+      "humao.rest-client"
+    ]
+  }
+}

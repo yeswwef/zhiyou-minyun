@@ -1,0 +1,51 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "1 · 安装依赖 (npm install)",
+      "type": "shell",
+      "command": "npm install",
+      "problemMatcher": []
+    },
+    {
+      "label": "2 · 生成 Prisma 客户端",
+      "type": "shell",
+      "command": "npm run db:generate",
+      "problemMatcher": []
+    },
+    {
+      "label": "3 · 建表迁移 (prisma migrate dev)",
+      "type": "shell",
+      "command": "npm run db:migrate",
+      "problemMatcher": []
+    },
+    {
+      "label": "4 · 启动开发服务器 (npm run dev)",
+      "type": "shell",
+      "command": "npm run dev",
+      "isBackground": true,
+      "problemMatcher": [],
+      "group": { "kind": "build", "isDefault": true },
+      "presentation": { "panel": "dedicated", "reveal": "always" }
+    },
+    {
+      "label": "5 · 类型检查 (tsc --noEmit)",
+      "type": "shell",
+      "command": "npm run typecheck",
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "6 · 生产构建 (npm run build)",
+      "type": "shell",
+      "command": "npm run build",
+      "problemMatcher": []
+    },
+    {
+      "label": "7 · 查看 Prisma Studio",
+      "type": "shell",
+      "command": "npm run db:studio",
+      "isBackground": true,
+      "problemMatcher": []
+    }
+  ]
+}
