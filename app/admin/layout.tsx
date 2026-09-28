@@ -1,0 +1,7 @@
+import Link from "next/link";
+import { BarChart3, FileCheck2, LayoutDashboard, Megaphone, ShieldCheck, Users } from "lucide-react";
+import { PageTransition } from "@/components/motion/PageTransition";
+
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
+  return <div className="flex min-h-screen bg-[#f3f5f7] text-[#1f2933]"><aside className="hidden w-64 shrink-0 bg-[#15232c] p-5 text-white md:block"><Link href="/admin/dashboard" className="mb-10 block font-serif text-xl">智游闽韵 <span className="block font-sans text-[10px] tracking-[.25em] text-slate-400">ADMIN CONSOLE</span></Link><nav className="space-y-1 text-sm text-slate-300">{[["/admin/dashboard", "总览", LayoutDashboard], ["#users", "用户管理", Users], ["#merchants", "商户与资源", ShieldCheck], ["#content", "内容审核", FileCheck2], ["#operation", "运营活动", Megaphone], ["#reports", "数据报表", BarChart3]].map(([href, label, Icon]) => <Link href={href as string} key={label as string} className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-white/10 hover:text-white"><Icon size={17} />{label as string}</Link>)}</nav></aside><div className="flex min-w-0 flex-1 flex-col"><header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-5"><span className="font-semibold">平台管理中心</span><div className="flex items-center gap-4 text-xs text-slate-500"><span>系统运行正常</span><Link href="/home" className="hover:text-brand">返回 C 端</Link></div></header><main className="flex-1 px-5 py-6 md:px-8"><PageTransition>{children}</PageTransition></main></div></div>;
+}

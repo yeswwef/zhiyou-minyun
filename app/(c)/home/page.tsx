@@ -1,24 +1,27 @@
-import Link from "next/link";
+import { ArrowRight, Camera, ChevronRight, Clock3, Compass, Heart, Map, MapPin, Search, Sparkles, Ticket, Utensils } from "lucide-react";
 
-/**
- * C 端首页占位（空壳）
- * 页面骨架留在这里，业务内容等你确认后一块一块加。
- * 文件名带 (c) 是 Next.js 的「路由组」：括号目录不出现在 URL 里，
- * 所以这个页面以后要走 /home，可以在 (c)/layout.tsx 里放 C 端专用的底部导航。
- */
-export default function CHomePlaceholder() {
-  return (
-    <div className="space-y-4">
-      <h1 className="text-lg font-semibold">C 端首页（占位）</h1>
-      <p className="text-sm text-stone-600">
-        这里以后放：AI 文化问答入口、行程规划入口、资源中心列表、预警提示。
-      </p>
-      <div className="card text-xs text-stone-500">
-        当前是空壳状态，页面只有结构和样式，没有业务逻辑。
-      </div>
-      <Link href="/" className="inline-block text-xs text-red-700">
-        ← 返回入口页
-      </Link>
-    </div>
-  );
+const QUICK_LINKS = [{ label: "三坊七巷", icon: Compass }, { label: "福州美食", icon: Utensils }, { label: "周末去哪儿", icon: Map }, { label: "非遗体验", icon: Sparkles }];
+const SERVICE_GROUPS = [
+  { label: "探索福州", items: [{ title: "目的地", desc: "景点 · 美食 · 住宿", icon: MapPin, tone: "coral" }, { title: "灵感游记", desc: "看本地人的真实推荐", icon: Heart, tone: "rose" }] },
+  { label: "规划旅程", items: [{ title: "AI 行程规划", desc: "告诉我你的时间和喜好", icon: Sparkles, tone: "mint" }, { title: "我的行程", desc: "收藏路线，随时出发", icon: Clock3, tone: "sky" }] },
+  { label: "旅途助手", items: [{ title: "识景听故事", desc: "拍一拍，认识眼前的福州", icon: Camera, tone: "gold" }, { title: "门票预约", desc: "景区门票，提前安排", icon: Ticket, tone: "lavender" }] },
+];
+const DESTINATIONS = [
+  { image: "/images/sanfangqixiang.jpg", title: "三坊七巷", sub: "坊巷深处，听见闽都", meta: "历史街区" },
+  { image: "/images/gushan.jpg", title: "鼓山", sub: "登高望海，涌泉听钟", meta: "自然风光" },
+  { image: "/images/shangxiahang.jpg", title: "上下杭", sub: "沿着闽江，慢慢逛老街", meta: "人文漫游" },
+  { image: "/images/yantaishan.jpg", title: "烟台山", sub: "一半山色，一半洋风", meta: "城市漫步" },
+];
+const STORIES = [{ image: "/images/xihu.jpg", title: "在西湖边，过一个不赶时间的下午", author: "林同学", likes: "328", avatar: "林" }, { image: "/images/molihua.jpg", title: "福州人的夏天，是一杯冰镇茉莉花茶", author: "阿榕", likes: "214", avatar: "榕" }, { image: "/images/zhenhailou.jpg", title: "第一次来福州，先去这几处看古城", author: "小满", likes: "566", avatar: "满" }];
+
+export default function CHome() {
+  return <main className="min-h-screen bg-[#f8f8f6] text-[#202522]">
+    <header className="site-header"><div className="site-header-inner"><a href="/home" className="brand-lockup"><span className="brand-mark">闽</span><span><strong>智游闽韵</strong><small>FUZHOU TRAVEL</small></span></a><nav className="main-nav"><a className="active" href="#explore">发现</a><a href="#plan">行程</a><a href="#stories">游记</a><a href="#shop">文旅商城</a></nav><div className="header-actions"><button className="header-icon" aria-label="搜索"><Search size={18} /></button><a className="login-link" href="#login">登录 / 注册</a></div></div></header>
+    <section className="hero" id="explore"><div className="hero-image" /><div className="hero-shade" /><div className="hero-content"><p className="eyebrow"><span /> 福州 · 有福之州 <span /></p><h1>来福州，<em>慢一点</em></h1><p className="hero-copy">把山海、坊巷和一碗热汤，留给真正的旅行。</p><div className="hero-search"><Search size={19} /><input aria-label="搜索福州目的地" placeholder="搜景点、路线、美食或问问 AI" /><button>开始探索 <ArrowRight size={16} /></button></div><div className="quick-links">{QUICK_LINKS.map(({ label, icon: Icon }) => <a href="#destinations" key={label}><Icon size={14} />{label}</a>)}</div></div><div className="hero-caption"><span>01</span><i /> <span>三坊七巷 · 福州</span></div><div className="hero-scroll">向下探索 <ChevronRight size={14} /></div></section>
+    <section className="services section-wrap">{SERVICE_GROUPS.map((group) => <div className="service-group" key={group.label}><div className="section-kicker">{group.label}</div><div className="service-items">{group.items.map(({ title, desc, icon: Icon, tone }) => <a className="service-item" href={title === "目的地" ? "/resources" : "#plan"} key={title}><span className={`service-icon ${tone}`}><Icon size={19} /></span><span><strong>{title}</strong><small>{desc}</small></span><ChevronRight size={16} className="service-arrow" /></a>)}</div></div>)}</section>
+    <section className="section-wrap plan-section" id="plan"><div className="section-heading"><div><p className="section-kicker">AI 灵感行程</p><h2>你的福州，<em>从今天开始</em></h2><p>不想做攻略？告诉我几天、几个人，以及你想要的节奏。</p></div><a className="text-link" href="#planner">试试 AI 规划 <ArrowRight size={16} /></a></div><div className="plan-card"><div className="plan-copy"><span className="plan-badge"><Sparkles size={14} /> AI TRIP PLANNER</span><h3>把想去的地方，<br /><em>串成一段好时光</em></h3><p>从鼓山日出到上下杭夜色，为你生成一份合心意的专属路线。</p><a href="#planner" className="dark-button">开始规划 <ArrowRight size={16} /></a></div><div className="plan-image" /></div></section>
+    <section className="section-wrap destinations-section" id="destinations"><div className="section-heading"><div><p className="section-kicker">去处推荐</p><h2>第一次来福州，<em>先去这里</em></h2></div><a className="text-link" href="#all">查看全部 <ArrowRight size={16} /></a></div><div className="destination-grid">{DESTINATIONS.map((item, index) => <a href="#destination" className={`destination-card card-${index}`} key={item.title}><div className="destination-image" style={{ backgroundImage: `url('${item.image}')` }} /><div className="destination-overlay" /><div className="destination-meta"><span>{item.meta}</span><h3>{item.title}</h3><p>{item.sub}</p></div></a>)}</div></section>
+    <section className="section-wrap stories-section" id="stories"><div className="section-heading"><div><p className="section-kicker">榕城生活</p><h2>本地人都在看</h2></div><a className="text-link" href="#stories-all">进入社区 <ArrowRight size={16} /></a></div><div className="story-grid">{STORIES.map((story) => <a href="#story" className="story-card" key={story.title}><div className="story-image" style={{ backgroundImage: `url('${story.image}')` }} /><div className="story-body"><h3>{story.title}</h3><div className="story-author"><span>{story.avatar}</span><small>{story.author}</small><span className="story-like"><Heart size={14} /> {story.likes}</span></div></div></a>)}</div></section>
+    <footer className="site-footer"><div className="footer-inner"><div className="brand-lockup"><span className="brand-mark">闽</span><span><strong>智游闽韵</strong><small>有福之州 · 文旅智能平台</small></span></div><div className="footer-links"><a href="#about">关于我们</a><a href="#help">帮助中心</a><a href="#privacy">隐私政策</a><a href="#source">数据来源与授权</a></div><p>© 2026 智游闽韵 · 让每一次抵达，都有福相伴</p></div></footer>
+  </main>;
 }

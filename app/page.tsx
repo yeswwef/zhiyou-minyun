@@ -37,6 +37,11 @@ export default function Home() {
             </Link>
           </StaggerItem>
           <StaggerItem>
+            <Link href="/admin/dashboard" className="flex items-center justify-between rounded-2xl border border-stone-200 bg-surface p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand hover:shadow-lg">
+              <span><span className="block font-serif text-lg font-bold text-ink">后台管理 · 平台运营</span><span className="mt-1 block text-xs text-stone-500">用户 · 商户 · 内容审核 · 数据总览</span></span><span className="text-sm font-semibold text-brand">/admin/dashboard →</span>
+            </Link>
+          </StaggerItem>
+          <StaggerItem>
             <Link
               href="/b/dashboard"
               className="flex items-center justify-between rounded-2xl border border-stone-200 bg-surface p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-brand hover:shadow-lg"

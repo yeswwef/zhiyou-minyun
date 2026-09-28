@@ -1,20 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Noto_Serif_SC, Noto_Sans_SC } from "next/font/google";
 import "./globals.css";
-
-const serif = Noto_Serif_SC({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-  variable: "--font-noto-serif",
-  display: "swap",
-});
-
-const sans = Noto_Sans_SC({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-noto-sans",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "智游闽韵 · 福建文旅智能平台",
@@ -30,7 +15,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-CN" className={`${serif.variable} ${sans.variable} h-full antialiased`}>
+    <html lang="zh-CN" className="h-full antialiased">
       <body className="min-h-full bg-paper font-sans text-ink">{children}</body>
     </html>
   );
