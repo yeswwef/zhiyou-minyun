@@ -1,5 +1,5 @@
 export type ResourceCategory = "景点" | "非遗" | "美食";
-
+//类型
 export type DestinationResource = {
   id: string;
   name: string;

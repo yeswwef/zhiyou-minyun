@@ -44,8 +44,11 @@ model User {
 
 model Resource {
   id          String        @id @default(cuid())
+  slug        String        @unique
   type        ResourceType
   title       String
+  district    String?
+  image       String?
   summary     String        @db.Text
   description String?       @db.Text
   history     String?       @db.Text
@@ -57,6 +60,7 @@ model Resource {
   goodFor     String?
   source      String // 资料来源（需求要求素材必须可溯源）
   license     String?
+  recommendationWeight Int   @default(0)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
   tags        ResourceTag[]
