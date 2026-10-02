@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 import { ResourceCard } from "@/features/destination-resources/components/ResourceCard";
 import type { DestinationResource, ResourceCategory } from "@/features/destination-resources/types";
 
@@ -59,7 +60,7 @@ export default function ResourcesPage() {
     <main className="resource-page">
       <header className="resource-site-nav">
         <a href="/home" className="resource-brand">
-          <span>闽</span>
+          <span><BrandMark size={19} /></span>
           <strong>智游闽韵</strong>
           <small>FUZHOU TRAVEL</small>
         </a>

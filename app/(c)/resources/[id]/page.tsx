@@ -1,8 +1,11 @@
-import { ArrowLeft, Clock3, Heart, MapPin } from "lucide-react";
+import { ArrowLeft, Clock3, MapPin } from "lucide-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 import { prisma } from "@/lib/db";
 import { FavoriteButton } from "@/features/destination-resources/components/FavoriteButton";
+import { AddToTripButton } from "@/features/destination-resources/components/AddToTripButton";
+import { ViewTracker } from "@/components/ViewTracker";
 
 export default async function ResourceDetailPage({
   params,
@@ -39,9 +42,10 @@ export default async function ResourceDetailPage({
 
   return (
     <main className="resource-detail-page">
+      <ViewTracker resourceId={resource.slug} />
       <header className="resource-site-nav">
         <a href="/home" className="resource-brand">
-          <span>闽</span>
+          <span><BrandMark size={19} /></span>
           <strong>智游闽韵</strong>
           <small>FUZHOU TRAVEL</small>
         </a>
@@ -79,10 +83,7 @@ export default async function ResourceDetailPage({
         <article className="detail-content">
           <div className="detail-actions">
             <FavoriteButton resourceId={resource.slug} />
-            <button className="detail-action">
-              <Heart size={16} />
-              加入行程
-            </button>
+            <AddToTripButton resourceId={resource.slug} title={resource.title} />
           </div>
 
           <section>

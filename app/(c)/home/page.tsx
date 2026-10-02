@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 
 type ResourceRecommendation = {
   image: string;
@@ -170,6 +171,20 @@ export default function CHome() {
   >([]);
   const [resourceLoading, setResourceLoading] = useState(true);
   const [resourceError, setResourceError] = useState("");
+  const [user, setUser] = useState<{
+    username: string;
+    nickname: string | null;
+  } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((response) => response.json())
+      .then(
+        (payload: { user: { username: string; nickname: string | null } | null }) =>
+          setUser(payload.user),
+      )
+      .catch(() => setUser(null));
+  }, []);
 
   useEffect(() => {
     fetch("/api/resources?recommended=true&limit=4")
@@ -207,7 +222,7 @@ export default function CHome() {
       <header className="site-header">
         <div className="site-header-inner">
           <a href="/home" className="brand-lockup" aria-label="智游闽韵首页">
-            <span className="brand-mark">闽</span>
+            <span className="brand-mark"><BrandMark size={22} /></span>
             <span>
               <strong>智游闽韵</strong>
               <small>FUZHOU TRAVEL</small>
@@ -226,7 +241,13 @@ export default function CHome() {
             <button className="header-icon" aria-label="搜索">
               <Search size={18} />
             </button>
-            <a className="login-link" href="#login">登录 / 注册</a>
+            {user ? (
+              <Link className="login-link" href="/profile">
+                {user.nickname || user.username}
+              </Link>
+            ) : (
+              <Link className="login-link" href="/login">登录 / 注册</Link>
+            )}
           </div>
         </div>
       </header>
@@ -236,7 +257,7 @@ export default function CHome() {
           <MapPin size={18} />
           <span>首页</span>
         </a>
-        <a href="/profile/favorites"><UserRound size={18} /><span>用户中心</span></a>
+        <Link href="/profile"><UserRound size={18} /><span>用户中心</span></Link>
         <a href="#ask"><MessageCircle size={18} /><span>AI文化问答</span></a>
         <a href="#plan"><Route size={18} /><span>旅游行程规划</span></a>
         <Link href="/resources"><Map size={18} /><span>文旅资源中心</span></Link>
@@ -499,7 +520,7 @@ export default function CHome() {
         <div className="learning-card"><div className="learning-copy"><span className="plan-badge"><GraduationCap size={14} /> INTANGIBLE HERITAGE</span><h2>跟着匠人，<br /><em>学一门福州手艺</em></h2><p>线上预约体验课，也可以先逛一逛非遗线上展厅。</p><div className="learning-actions"><a href="#classes">预约体验课 <ArrowRight size={15} /></a><a href="#museum"><Landmark size={15} />线上展厅</a></div></div><div className="learning-image" /></div>
       </section>
 
-      <footer className="site-footer"><div className="footer-inner"><div className="brand-lockup"><span className="brand-mark">闽</span><span><strong>智游闽韵</strong><small>有福之州 · 文旅智能平台</small></span></div><div className="footer-links"><a href="#about">关于我们</a><a href="#help">帮助中心</a><a href="#privacy">隐私政策</a><a href="#source">数据来源与授权</a></div><p>© 2026 智游闽韵 · 让每一次抵达，都有福相伴</p></div></footer>
+      <footer className="site-footer"><div className="footer-inner"><div className="brand-lockup"><span className="brand-mark"><BrandMark size={22} /></span><span><strong>智游闽韵</strong><small>有福之州 · 文旅智能平台</small></span></div><div className="footer-links"><a href="#about">关于我们</a><a href="#help">帮助中心</a><a href="#privacy">隐私政策</a><a href="#source">数据来源与授权</a></div><p>© 2026 智游闽韵 · 让每一次抵达，都有福相伴</p></div></footer>
     </main>
   );
 }

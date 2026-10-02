@@ -36,8 +36,10 @@ model User {
   role         Role          @default(C)
   merchantName String? // B 端店铺名
   createdAt    DateTime      @default(now())
-  favorites    Favorite[]
-  chatSessions ChatSession[]
+  favorites      Favorite[]
+  trips          Trip[]
+  resourceViews  ResourceView[]
+  chatSessions   ChatSession[]
 }
 
 // ---------- 文旅资源 ----------
@@ -63,8 +65,9 @@ model Resource {
   recommendationWeight Int   @default(0)
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
-  tags        ResourceTag[]
-  favorites   Favorite[]
+  tags          ResourceTag[]
+  favorites     Favorite[]
+  resourceViews ResourceView[]
 
   @@index([type])
 }
@@ -93,6 +96,36 @@ model Favorite {
   resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
 
   @@unique([userId, resourceId])
+}
+
+// ---------- 行程 ----------
+
+model Trip {
+  id           String    @id @default(cuid())
+  userId       String
+  title        String
+  durationDays Int?
+  startDate    DateTime?
+  items        Json
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------- 浏览足迹 ----------
+
+model ResourceView {
+  id         String   @id @default(cuid())
+  userId     String
+  resourceId String
+  viewedAt   DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, resourceId])
+  @@index([userId])
 }
 
 // ---------- RAG 问答历史 ----------

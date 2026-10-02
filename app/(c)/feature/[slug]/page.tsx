@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 
 const FEATURE_CONTENT: Record<string, { title: string; eyebrow: string; description: string }> = {
   profile: { title: "用户中心", eyebrow: "MY FUZHOU", description: "管理个人资料、收藏内容与旅行偏好。" },
@@ -26,7 +27,7 @@ export default async function FeaturePage({ params }: { params: Promise<{ slug: 
   return (
     <main className="feature-page">
       <header className="feature-page-header">
-        <Link href="/home" className="feature-brand"><span>闽</span><strong>智游闽韵</strong><small>FUZHOU TRAVEL</small></Link>
+        <Link href="/home" className="feature-brand"><span><BrandMark size={20} /></span><strong>智游闽韵</strong><small>FUZHOU TRAVEL</small></Link>
         <Link href="/home" className="feature-back">返回首页</Link>
       </header>
       <section className="feature-page-hero">
