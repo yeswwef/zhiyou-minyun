@@ -102,3 +102,32 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({ ok: true, saved });
 }
+
+/** 将升级前保存在 localStorage 的收藏一次性导入当前账号。 */
+export async function PUT(request: NextRequest) {
+  const userId = await getSessionUserId();
+  if (!userId) {
+    return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const resourceIds: string[] = Array.isArray(body?.resourceIds)
+    ? [...new Set<string>(body.resourceIds.filter((id: unknown): id is string => typeof id === "string"))]
+    : [];
+
+  if (!resourceIds.length) {
+    return NextResponse.json({ ok: true, imported: 0 });
+  }
+
+  const resources = await prisma.resource.findMany({
+    where: { slug: { in: resourceIds } },
+    select: { id: true },
+  });
+
+  const result = await prisma.favorite.createMany({
+    data: resources.map((resource) => ({ userId, resourceId: resource.id })),
+    skipDuplicates: true,
+  });
+
+  return NextResponse.json({ ok: true, imported: result.count });
+}

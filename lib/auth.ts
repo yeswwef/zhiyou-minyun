@@ -11,7 +11,14 @@ export const SESSION_COOKIE_NAME = "zhiyou_session";
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 天
 
 function getSecret(): string {
-  return process.env.AUTH_SECRET || "zhiyou-minyun-dev-secret-change-me";
+  const secret = process.env.AUTH_SECRET?.trim();
+  if (secret) return secret;
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("生产环境必须配置 AUTH_SECRET");
+  }
+
+  return "zhiyou-minyun-dev-secret-change-me";
 }
 
 /** 使用 scrypt 加盐哈希密码，存储格式为 `盐:哈希` */
