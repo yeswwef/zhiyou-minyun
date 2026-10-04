@@ -7,6 +7,14 @@ import { BrandMark } from "@/components/BrandMark";
 
 type Mode = "login" | "register";
 
+function safeNextPath() {
+  if (typeof window === "undefined") return "/profile";
+  const candidate = new URLSearchParams(window.location.search).get("next");
+  return candidate?.startsWith("/") && !candidate.startsWith("//")
+    ? candidate
+    : "/profile";
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
@@ -20,7 +28,7 @@ export default function LoginPage() {
     fetch("/api/auth/me")
       .then((response) => response.json())
       .then((payload: { user: unknown }) => {
-        if (payload.user) router.replace("/profile");
+        if (payload.user) router.replace(safeNextPath());
       })
       .catch(() => {});
   }, [router]);
@@ -45,7 +53,7 @@ export default function LoginPage() {
     setBusy(false);
 
     if (response.ok) {
-      router.replace("/profile");
+      router.replace(safeNextPath());
       router.refresh();
     } else {
       setError(payload.error ?? "操作失败，请重试");

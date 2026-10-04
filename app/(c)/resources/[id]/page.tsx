@@ -1,4 +1,4 @@
-import { ArrowLeft, Clock3, MapPin } from "lucide-react";
+import { ArrowLeft, Clock3, MapPin, Star } from "lucide-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
@@ -84,6 +84,12 @@ export default async function ResourceDetailPage({
           <div className="detail-actions">
             <FavoriteButton resourceId={resource.slug} />
             <AddToTripButton resourceId={resource.slug} title={resource.title} />
+            <Link className="detail-community-action" href={`/community/new?type=checkin&resourceId=${resource.slug}`}>
+              <MapPin size={16} /> 打卡
+            </Link>
+            <Link className="detail-community-action review" href={`/community/new?type=review&resourceId=${resource.slug}`}>
+              <Star size={16} /> 写评价
+            </Link>
           </div>
 
           <section>

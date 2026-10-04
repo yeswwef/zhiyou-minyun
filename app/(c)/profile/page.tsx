@@ -20,7 +20,14 @@ type SummaryUser = {
 type Summary = {
   user: SummaryUser | null;
   loggedIn: boolean;
-  counts: { favorites: number; trips: number; views: number; chatSessions: number };
+  counts: {
+    favorites: number;
+    trips: number;
+    views: number;
+    chatSessions: number;
+    following: number;
+    followers: number;
+  };
 };
 
 const STAT_ITEMS = [
@@ -28,6 +35,8 @@ const STAT_ITEMS = [
   { key: "trips", label: "行程" },
   { key: "views", label: "足迹" },
   { key: "chatSessions", label: "问答" },
+  { key: "following", label: "关注" },
+  { key: "followers", label: "粉丝" },
 ] as const;
 
 export default function ProfilePage() {

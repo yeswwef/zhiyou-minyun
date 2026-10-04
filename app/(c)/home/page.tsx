@@ -4,11 +4,8 @@ import {
   ArrowRight,
   BatteryCharging,
   CalendarDays,
-  Camera,
   ChevronRight,
-  Clock3,
   CloudRain,
-  Compass,
   GraduationCap,
   Heart,
   Hospital,
@@ -30,7 +27,6 @@ import {
   Ticket,
   Toilet,
   Truck,
-  Utensils,
   UserRound,
   UsersRound,
 } from "lucide-react";
@@ -53,73 +49,6 @@ type ResourceApiItem = {
   image: string;
   summary: string;
 };
-
-const QUICK_LINKS = [
-  { label: "三坊七巷", icon: Compass },
-  { label: "福州美食", icon: Utensils },
-  { label: "周末去哪儿", icon: Map },
-  { label: "非遗体验", icon: Sparkles },
-];
-
-const SERVICE_GROUPS = [
-  {
-    label: "探索福州",
-    items: [
-      {
-        title: "文旅资源中心",
-        desc: "景点 · 非遗 · 美食",
-        icon: MapPin,
-        tone: "coral",
-        href: "/resources",
-      },
-      {
-        title: "灵感游记",
-        desc: "看本地人的真实推荐",
-        icon: Heart,
-        tone: "rose",
-        href: "#community",
-      },
-    ],
-  },
-  {
-    label: "规划旅程",
-    items: [
-      {
-        title: "AI 行程规划",
-        desc: "告诉我你的时间和喜好",
-        icon: Sparkles,
-        tone: "mint",
-        href: "#plan",
-      },
-      {
-        title: "我的行程",
-        desc: "收藏路线，随时出发",
-        icon: Clock3,
-        tone: "sky",
-        href: "#plan",
-      },
-    ],
-  },
-  {
-    label: "旅途助手",
-    items: [
-      {
-        title: "识景听故事",
-        desc: "拍一拍，认识眼前的福州",
-        icon: Camera,
-        tone: "gold",
-        href: "#learn",
-      },
-      {
-        title: "门票预约",
-        desc: "景区门票，提前安排",
-        icon: Ticket,
-        tone: "lavender",
-        href: "#events",
-      },
-    ],
-  },
-];
 
 const STORIES = [
   {
@@ -232,7 +161,7 @@ export default function CHome() {
           <nav className="main-nav" aria-label="主导航">
             <a className="active" href="#explore">发现</a>
             <a href="#plan">行程</a>
-            <a href="#community">游记</a>
+            <Link href="/community">游记</Link>
             <a href="#shop">商城</a>
             <a href="#help">便民</a>
           </nav>
@@ -266,7 +195,7 @@ export default function CHome() {
         <a href="#tickets"><Ticket size={18} /><span>票务预约</span></a>
         <a href="#help"><ShieldCheck size={18} /><span>便民与应急</span></a>
         <a href="#shop"><ShoppingBag size={18} /><span>文旅商品购买</span></a>
-        <a href="#community"><UsersRound size={18} /><span>文旅社区</span></a>
+        <Link href="/community"><UsersRound size={18} /><span>文旅社区</span></Link>
         <a href="#learn"><GraduationCap size={18} /><span>非遗学习</span></a>
       </aside>
 
@@ -358,11 +287,11 @@ export default function CHome() {
           <div className="home-content-image" style={{ backgroundImage: "url('/images/shangxiahang.jpg')" }} />
           <b>福州文旅嘉年华</b>
         </a>
-        <a href="#community" className="home-content-card">
+        <Link href="/community" className="home-content-card">
           <div><strong>游记故事</strong><small>真实的旅行，动人的福州</small></div>
           <div className="home-content-image" style={{ backgroundImage: "url('/images/sanfangqixiang.jpg')" }} />
           <b>在三坊七巷，遇见慢下来的福州</b>
-        </a>
+        </Link>
         <a href="#learn" className="home-content-card">
           <div><strong>非遗学习</strong><small>传承闽都匠心，感受非遗之美</small></div>
           <div className="home-content-image" style={{ backgroundImage: "url('/images/zhenhailou.jpg')" }} />
@@ -495,19 +424,19 @@ export default function CHome() {
             <p className="section-kicker">榕城生活</p>
             <h2>本地人都在看</h2>
           </div>
-          <a className="text-link" href="#stories-all">进入社区 <ArrowRight size={16} /></a>
+          <Link className="text-link" href="/community">进入社区 <ArrowRight size={16} /></Link>
         </div>
 
         <div className="community-layout">
           <div className="story-grid">
             {STORIES.map((story) => (
-              <a href="#story" className="story-card" key={story.title}>
+              <Link href="/community" className="story-card" key={story.title}>
                 <div className="story-image" style={{ backgroundImage: `url('${story.image}')` }} />
                 <div className="story-body"><h3>{story.title}</h3><div className="story-author"><span>{story.avatar}</span><small>{story.author}</small><span className="story-like"><Heart size={14} /> {story.likes}</span></div></div>
-              </a>
+              </Link>
             ))}
           </div>
-          <a className="write-story" href="#write"><span className="write-icon"><PenLine size={20} /></span><strong>写一篇游记</strong><small>记录你的福州时刻</small><ArrowRight size={18} /></a>
+          <Link className="write-story" href="/community/new?type=checkin"><span className="write-icon"><PenLine size={20} /></span><strong>写一篇游记</strong><small>记录你的福州时刻</small><ArrowRight size={18} /></Link>
         </div>
       </section>
 

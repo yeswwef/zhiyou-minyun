@@ -26,48 +26,65 @@ enum ResourceType {
   ICH // 非遗
 }
 
+enum CommunityPostType {
+  CHECKIN
+  REVIEW
+}
+
+enum CommunityPostStatus {
+  PUBLISHED
+  HIDDEN
+}
+
 // ---------- 账号 ----------
 
 model User {
-  id           String        @id @default(cuid())
-  username     String        @unique
-  nickname     String?
-  passwordHash String
-  role         Role          @default(C)
-  merchantName String? // B 端店铺名
-  createdAt    DateTime      @default(now())
-  favorites      Favorite[]
-  trips          Trip[]
-  resourceViews  ResourceView[]
-  chatSessions   ChatSession[]
+  id                 String                  @id @default(cuid())
+  username           String                  @unique
+  nickname           String?
+  passwordHash       String
+  role               Role                    @default(C)
+  merchantName       String? // B 端店铺名
+  createdAt          DateTime                @default(now())
+  favorites          Favorite[]
+  trips              Trip[]
+  resourceViews      ResourceView[]
+  chatSessions       ChatSession[]
+  communityPosts     CommunityPost[]
+  communityLikes     CommunityPostLike[]
+  communityFavorites CommunityPostFavorite[]
+  communityComments  CommunityComment[]
+  following          UserFollow[]            @relation("UserFollowing")
+  followers          UserFollow[]            @relation("UserFollowers")
 }
 
 // ---------- 文旅资源 ----------
 
 model Resource {
-  id          String        @id @default(cuid())
-  slug        String        @unique
-  type        ResourceType
-  title       String
-  district    String?
-  image       String?
-  summary     String        @db.Text
-  description String?       @db.Text
-  history     String?       @db.Text
-  openTime    String?
-  traffic     String?
-  address     String?
-  lat         Float?
-  lng         Float?
-  goodFor     String?
-  source      String // 资料来源（需求要求素材必须可溯源）
-  license     String?
-  recommendationWeight Int   @default(0)
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  tags          ResourceTag[]
-  favorites     Favorite[]
-  resourceViews ResourceView[]
+  id                   String          @id @default(cuid())
+  slug                 String          @unique
+  type                 ResourceType
+  title                String
+  district             String?
+  image                String?
+  summary              String          @db.Text
+  description          String?         @db.Text
+  history              String?         @db.Text
+  openTime             String?
+  traffic              String?
+  address              String?
+  lat                  Float?
+  lng                  Float?
+  goodFor              String?
+  source               String // 资料来源（需求要求素材必须可溯源）
+  license              String?
+  recommendationWeight Int             @default(0)
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+  tags                 ResourceTag[]
+  favorites            Favorite[]
+  resourceViews        ResourceView[]
+  communityPosts       CommunityPost[]
 
   @@index([type])
 }
@@ -154,4 +171,93 @@ model ChatMessage {
   session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
+}
+
+// ---------- 文旅社区 ----------
+
+model CommunityPost {
+  id                   String                  @id @default(cuid())
+  userId               String
+  resourceId           String
+  type                 CommunityPostType
+  status               CommunityPostStatus     @default(PUBLISHED)
+  title                String
+  content              String                  @db.Text
+  rating               Int?
+  visitedAt            DateTime?
+  recommendationWeight Int                     @default(0)
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
+  user                 User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resource             Resource                @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  images               CommunityPostImage[]
+  likes                CommunityPostLike[]
+  favorites            CommunityPostFavorite[]
+  comments             CommunityComment[]
+
+  @@index([status, createdAt])
+  @@index([resourceId, createdAt])
+  @@index([userId, createdAt])
+  @@index([type, createdAt])
+}
+
+model CommunityPostImage {
+  id        String        @id @default(cuid())
+  postId    String
+  imageUrl  String
+  sortOrder Int           @default(0)
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, sortOrder])
+}
+
+model CommunityPostLike {
+  id        String        @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId, createdAt])
+}
+
+model CommunityPostFavorite {
+  id        String        @id @default(cuid())
+  userId    String
+  postId    String
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId, createdAt])
+}
+
+model CommunityComment {
+  id        String        @id @default(cuid())
+  userId    String
+  postId    String
+  content   String        @db.Text
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@index([userId, createdAt])
+}
+
+model UserFollow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId, createdAt])
+  @@index([followerId, createdAt])
 }

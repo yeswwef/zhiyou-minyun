@@ -1,4 +1,5 @@
 import { prisma } from "../lib/db";
+import { hashPassword } from "../lib/auth";
 
 const resources = [
   {
@@ -123,6 +124,144 @@ async function main() {
     });
   }
   console.log(`已写入 ${resources.length} 条文旅资源`);
+
+  if (process.env.SEED_DEMO_COMMUNITY === "true") {
+    await seedCommunityDemo();
+  } else {
+    console.log("未设置 SEED_DEMO_COMMUNITY=true，跳过社区演示数据");
+  }
+}
+
+const demoAuthors = [
+  { username: "demo_lin", nickname: "林同学" },
+  { username: "demo_arong", nickname: "阿榕" },
+  { username: "demo_xiaoman", nickname: "小满" },
+  { username: "demo_shanhai", nickname: "山海之间" },
+  { username: "demo_shiyu", nickname: "石语" },
+] as const;
+
+const demoPosts = [
+  {
+    id: "demo-community-sanfang-checkin",
+    author: "demo_lin",
+    resourceSlug: "sanfangqixiang",
+    type: "CHECKIN" as const,
+    title: "在坊巷里，走进千年榕城的人文烟火",
+    content: "青砖黛瓦，坊巷纵横。漫步三坊七巷，感受福州的历史沉淀与市井烟火。每一条巷子都有故事，每一扇门后都是时光。",
+    rating: null,
+    daysAgo: 3,
+    recommendationWeight: 100,
+  },
+  {
+    id: "demo-community-jasmine-review",
+    author: "demo_arong",
+    resourceSlug: "moli",
+    type: "REVIEW" as const,
+    title: "一杯茉莉花茶，喝出福州的夏天",
+    content: "在福州喝到正宗的茉莉花茶，花香清雅，回味甘甜。走进茶庄了解窨制技艺，才知道一杯好茶的来之不易。",
+    rating: 5,
+    daysAgo: 5,
+    recommendationWeight: 95,
+  },
+  {
+    id: "demo-community-fishball-review",
+    author: "demo_xiaoman",
+    resourceSlug: "fuzhou-fishball",
+    type: "REVIEW" as const,
+    title: "皮薄馅鲜，汤头清爽",
+    content: "来福州一定要吃鱼丸！鱼皮弹嫩，肉馅鲜香，清汤里带着淡淡胡椒香，是很舒服的一口福州味道。",
+    rating: 4,
+    daysAgo: 4,
+    recommendationWeight: 90,
+  },
+  {
+    id: "demo-community-gushan-checkin",
+    author: "demo_shanhai",
+    resourceSlug: "gushan",
+    type: "CHECKIN" as const,
+    title: "登上鼓山，看榕城最美的晚霞",
+    content: "鼓山的空气太好了，沿着石阶一路向上，俯瞰福州全景。傍晚云层被夕阳染成金色，真的太治愈了。",
+    rating: null,
+    daysAgo: 6,
+    recommendationWeight: 85,
+  },
+  {
+    id: "demo-community-shoushan-review",
+    author: "demo_shiyu",
+    resourceSlug: "moyan",
+    type: "REVIEW" as const,
+    title: "一方石头里的闽都匠心",
+    content: "第一次近距离看寿山石雕，老师傅会顺着石材天然的色泽和纹理构思作品。细节精巧，很能感受到传统技艺的温度。",
+    rating: 5,
+    daysAgo: 8,
+    recommendationWeight: 80,
+  },
+] as const;
+
+function dateDaysAgo(days: number) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  date.setHours(16, 30, 0, 0);
+  return date;
+}
+
+async function seedCommunityDemo() {
+  const passwordHash = hashPassword("demo123456");
+  const authorIds = new Map<string, string>();
+
+  for (const author of demoAuthors) {
+    const user = await prisma.user.upsert({
+      where: { username: author.username },
+      update: { nickname: author.nickname },
+      create: {
+        username: author.username,
+        nickname: author.nickname,
+        passwordHash,
+        role: "C",
+      },
+      select: { id: true },
+    });
+    authorIds.set(author.username, user.id);
+  }
+
+  for (const post of demoPosts) {
+    const resource = await prisma.resource.findUniqueOrThrow({
+      where: { slug: post.resourceSlug },
+      select: { id: true, image: true },
+    });
+    const userId = authorIds.get(post.author);
+    if (!userId) throw new Error(`缺少演示用户：${post.author}`);
+    const createdAt = dateDaysAgo(post.daysAgo);
+    const data = {
+      userId,
+      resourceId: resource.id,
+      type: post.type,
+      status: "PUBLISHED" as const,
+      title: post.title,
+      content: post.content,
+      rating: post.rating,
+      visitedAt: createdAt,
+      recommendationWeight: post.recommendationWeight,
+      createdAt,
+    };
+    const images = resource.image
+      ? [{ imageUrl: resource.image, sortOrder: 0 }]
+      : [];
+    await prisma.communityPost.upsert({
+      where: { id: post.id },
+      update: {
+        ...data,
+        images: { deleteMany: {}, create: images },
+      },
+      create: {
+        id: post.id,
+        ...data,
+        images: { create: images },
+      },
+    });
+  }
+
+  console.log(`已写入 ${demoPosts.length} 条社区演示内容，演示账号密码均为 demo123456`);
 }
 
 main()

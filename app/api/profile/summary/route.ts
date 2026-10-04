@@ -8,7 +8,7 @@ export async function GET() {
     return NextResponse.json({ user: null, loggedIn: false });
   }
 
-  const [user, favorites, trips, views, chatSessions] = await Promise.all([
+  const [user, resourceFavorites, communityFavorites, trips, views, chatSessions, following, followers] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -20,14 +20,26 @@ export async function GET() {
       },
     }),
     prisma.favorite.count({ where: { userId } }),
+    prisma.communityPostFavorite.count({ where: { userId } }),
     prisma.trip.count({ where: { userId } }),
     prisma.resourceView.count({ where: { userId } }),
     prisma.chatSession.count({ where: { userId } }),
+    prisma.userFollow.count({ where: { followerId: userId } }),
+    prisma.userFollow.count({ where: { followingId: userId } }),
   ]);
 
   return NextResponse.json({
     user,
     loggedIn: true,
-    counts: { favorites, trips, views, chatSessions },
+    counts: {
+      favorites: resourceFavorites + communityFavorites,
+      resourceFavorites,
+      communityFavorites,
+      trips,
+      views,
+      chatSessions,
+      following,
+      followers,
+    },
   });
 }

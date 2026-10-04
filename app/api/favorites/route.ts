@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { getSessionUserId } from "@/lib/auth";
+import { communityPostInclude, toCommunityPostDto } from "@/features/community/data";
 
 type ResourceRow = {
   slug: string;
@@ -55,14 +56,22 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ saved: !!favorite, loggedIn: true });
   }
 
-  const favorites = await prisma.favorite.findMany({
-    where: { userId },
-    include: { resource: { include: { tags: { include: { tag: true } } } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const [favorites, communityFavorites] = await Promise.all([
+    prisma.favorite.findMany({
+      where: { userId },
+      include: { resource: { include: { tags: { include: { tag: true } } } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.communityPostFavorite.findMany({
+      where: { userId, post: { status: "PUBLISHED" } },
+      include: { post: { include: communityPostInclude } },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
 
   return NextResponse.json({
     data: favorites.map((item) => toResource(item.resource as ResourceRow)),
+    community: communityFavorites.map((item) => toCommunityPostDto(item.post)),
     loggedIn: true,
   });
 }

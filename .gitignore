@@ -49,3 +49,6 @@ next-env.d.ts
 
 # 上传的临时图片
 /public/uploads/
+
+# 文旅社区用户上传图片（本地演示存储）
+/public/uploads/community/
