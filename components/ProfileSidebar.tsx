@@ -6,6 +6,7 @@ import {
   Clock3,
   Footprints,
   Heart,
+  TicketCheck,
   MessageCircle,
   UserCheck,
   UsersRound,
@@ -16,6 +17,7 @@ import {
 const MENU = [
   { href: "/profile", label: "个人信息", icon: UserRound },
   { href: "/profile/favorites", label: "我的收藏", icon: Heart },
+  { href: "/profile/bookings", label: "我的预约", icon: TicketCheck },
   { href: "/profile/posts", label: "我的发布", icon: FileText },
   { href: "/profile/following", label: "我的关注", icon: UserCheck },
   { href: "/profile/followers", label: "我的粉丝", icon: UsersRound },

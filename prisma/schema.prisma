@@ -18,6 +18,32 @@ datasource db {
 enum Role {
   C // C 端游客
   B // B 端商户 / 非遗传承人
+  ADMIN // 平台后台管理员
+}
+
+enum VenueType {
+  SCENIC
+  MUSEUM
+  PERFORMANCE
+}
+
+enum TicketStatus {
+  DRAFT
+  OPEN
+  PAUSED
+  CLOSED
+}
+
+enum TicketSlotStatus {
+  OPEN
+  CLOSED
+}
+
+enum TicketBookingStatus {
+  CONFIRMED
+  VERIFIED
+  CANCELLED
+  EXPIRED
 }
 
 enum ResourceType {
@@ -56,6 +82,8 @@ model User {
   communityComments  CommunityComment[]
   following          UserFollow[]            @relation("UserFollowing")
   followers          UserFollow[]            @relation("UserFollowers")
+  ticketBookings     TicketBooking[]
+  createdTicketItems TicketItem[]            @relation("TicketItemCreator")
 }
 
 // ---------- 文旅资源 ----------
@@ -260,4 +288,82 @@ model UserFollow {
   @@unique([followerId, followingId])
   @@index([followingId, createdAt])
   @@index([followerId, createdAt])
+}
+
+// ---------- 平台票务预约：后台统一管理 ----------
+
+model Venue {
+  id        String       @id @default(cuid())
+  type      VenueType
+  name      String
+  address   String
+  lat       Float?
+  lng       Float?
+  contact   String?
+  image     String?
+  enabled   Boolean      @default(true)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  tickets   TicketItem[]
+
+  @@index([type, enabled])
+}
+
+model TicketItem {
+  id               String       @id @default(cuid())
+  venueId          String
+  createdByAdminId String
+  title            String
+  summary          String       @db.Text
+  description      String?      @db.Text
+  notice           String?      @db.Text
+  image            String?
+  status           TicketStatus @default(DRAFT)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  venue            Venue        @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  createdByAdmin   User         @relation("TicketItemCreator", fields: [createdByAdminId], references: [id], onDelete: Restrict)
+  slots            TicketSlot[]
+
+  @@index([venueId, status])
+  @@index([createdByAdminId])
+}
+
+model TicketSlot {
+  id               String           @id @default(cuid())
+  ticketItemId     String
+  startAt          DateTime
+  endAt            DateTime
+  capacity         Int
+  bookedCount      Int              @default(0)
+  warningThreshold Int              @default(80)
+  status           TicketSlotStatus @default(OPEN)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  ticketItem       TicketItem       @relation(fields: [ticketItemId], references: [id], onDelete: Cascade)
+  bookings         TicketBooking[]
+
+  @@index([ticketItemId, startAt])
+  @@index([status, startAt])
+}
+
+model TicketBooking {
+  id           String              @id @default(cuid())
+  bookingNo    String              @unique
+  verifyCode   String              @unique
+  userId       String
+  slotId       String
+  quantity     Int                 @default(1)
+  contactName  String
+  contactPhone String
+  status       TicketBookingStatus @default(CONFIRMED)
+  verifiedAt   DateTime?
+  cancelledAt  DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slot         TicketSlot          @relation(fields: [slotId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([slotId, status])
 }

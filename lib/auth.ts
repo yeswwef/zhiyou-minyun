@@ -81,7 +81,8 @@ export type SessionUser = {
   id: string;
   username: string;
   nickname: string | null;
-  role: "C" | "B";
+  role: "C" | "B" | "ADMIN";
+  merchantName: string | null;
   createdAt: Date;
 };
 
@@ -96,6 +97,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       username: true,
       nickname: true,
       role: true,
+      merchantName: true,
       createdAt: true,
     },
   });

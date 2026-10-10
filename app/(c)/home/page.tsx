@@ -192,7 +192,7 @@ export default function CHome() {
         <Link href="/resources"><Map size={18} /><span>文旅资源中心</span></Link>
         <a href="#recognition"><ScanLine size={18} /><span>AI多模态识景</span></a>
         <a href="#digital-guide"><Bot size={18} /><span>AI数字人讲解</span></a>
-        <a href="#tickets"><Ticket size={18} /><span>票务预约</span></a>
+        <Link href="/tickets"><Ticket size={18} /><span>票务预约</span></Link>
         <a href="#help"><ShieldCheck size={18} /><span>便民与应急</span></a>
         <a href="#shop"><ShoppingBag size={18} /><span>文旅商品购买</span></a>
         <Link href="/community"><UsersRound size={18} /><span>文旅社区</span></Link>

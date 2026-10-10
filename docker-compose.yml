@@ -1,4 +1,19 @@
 services:
+  redis:
+    image: redis:7-alpine
+    container_name: zhiyou-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   qdrant:
     image: qdrant/qdrant:latest
     container_name: zhiyou-qdrant
@@ -10,4 +25,5 @@ services:
       - qdrant_data:/qdrant/storage
 
 volumes:
+  redis_data:
   qdrant_data:

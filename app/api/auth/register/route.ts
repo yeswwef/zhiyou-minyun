@@ -12,6 +12,9 @@ export async function POST(request: NextRequest) {
   const username = String(body?.username ?? "").trim();
   const password = String(body?.password ?? "");
   const nickname = body?.nickname ? String(body.nickname).trim() : null;
+  const role = body?.role === "B" ? "B" : "C";
+  const merchantName =
+    role === "B" && body?.merchantName ? String(body.merchantName).trim() : null;
 
   if (!username || !password) {
     return NextResponse.json(
@@ -31,6 +34,12 @@ export async function POST(request: NextRequest) {
       { status: 400 },
     );
   }
+  if (role === "B" && !merchantName) {
+    return NextResponse.json(
+      { ok: false, error: "请填写店铺 / 工作室名称" },
+      { status: 400 },
+    );
+  }
 
   const exists = await prisma.user.findUnique({ where: { username } });
   if (exists) {
@@ -41,7 +50,13 @@ export async function POST(request: NextRequest) {
   }
 
   const user = await prisma.user.create({
-    data: { username, passwordHash: hashPassword(password), nickname },
+    data: {
+      username,
+      passwordHash: hashPassword(password),
+      nickname,
+      role,
+      merchantName,
+    },
     select: { id: true, username: true, nickname: true, role: true },
   });
 

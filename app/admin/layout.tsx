@@ -1,7 +1,32 @@
 import Link from "next/link";
-import { BarChart3, FileCheck2, LayoutDashboard, Megaphone, ShieldCheck, Users } from "lucide-react";
+import { Bell, LogOut, ShieldCheck } from "lucide-react";
 import { PageTransition } from "@/components/motion/PageTransition";
+import { AdminSidebarNav } from "@/components/admin/AdminSidebarNav";
+import { BrandMark } from "@/components/BrandMark";
+import { getSessionUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  return <div className="flex min-h-screen bg-[#f3f5f7] text-[#1f2933]"><aside className="hidden w-64 shrink-0 bg-[#15232c] p-5 text-white md:block"><Link href="/admin/dashboard" className="mb-10 block font-serif text-xl">智游闽韵 <span className="block font-sans text-[10px] tracking-[.25em] text-slate-400">ADMIN CONSOLE</span></Link><nav className="space-y-1 text-sm text-slate-300">{[["/admin/dashboard", "总览", LayoutDashboard], ["#users", "用户管理", Users], ["#merchants", "商户与资源", ShieldCheck], ["#content", "内容审核", FileCheck2], ["#operation", "运营活动", Megaphone], ["#reports", "数据报表", BarChart3]].map(([href, label, Icon]) => <Link href={href as string} key={label as string} className="flex items-center gap-3 rounded-lg px-3 py-2.5 hover:bg-white/10 hover:text-white"><Icon size={17} />{label as string}</Link>)}</nav></aside><div className="flex min-w-0 flex-1 flex-col"><header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-5"><span className="font-semibold">平台管理中心</span><div className="flex items-center gap-4 text-xs text-slate-500"><span>系统运行正常</span><Link href="/home" className="hover:text-brand">返回 C 端</Link></div></header><main className="flex-1 px-5 py-6 md:px-8"><PageTransition>{children}</PageTransition></main></div></div>;
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const user = await getSessionUser();
+  if (!user || user.role !== "ADMIN") redirect("/login?endpoint=admin&next=/admin/dashboard");
+  return (
+    <div className="admin-shell">
+      <aside className="admin-sidebar">
+        <Link href="/admin/dashboard" className="admin-brand">
+          <span><BrandMark size={24} /></span>
+          <span><strong>智游闽韵</strong><small>文旅运营管理平台</small></span>
+        </Link>
+        <div className="admin-sidebar-caption">PLATFORM CONSOLE</div>
+        <AdminSidebarNav />
+        <div className="admin-sidebar-foot"><ShieldCheck size={16}/><span><b>系统服务正常</b><small>数据连接与票务接口在线</small></span></div>
+      </aside>
+      <div className="admin-content">
+        <header className="admin-topbar">
+          <div><p>福州文旅票务中心</p><span>FUZHOU CULTURE & TRAVEL</span></div>
+          <div className="admin-account"><button aria-label="通知"><Bell size={17}/><i /></button><span className="admin-avatar">管</span><span><b>{user.nickname||user.username}</b><small>平台管理员</small></span><Link href="/api/auth/logout"><LogOut size={15}/>退出</Link></div>
+        </header>
+        <main className="admin-workspace"><div className="admin-watermark" aria-hidden="true">福</div><PageTransition>{children}</PageTransition></main>
+      </div>
+    </div>
+  );
 }
