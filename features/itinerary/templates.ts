@@ -1,0 +1,307 @@
+/**
+ * @module-note features/itinerary/templates.ts
+ * 套餐行程模板：整理自《资料11.xlsx》，包含主题、代表景区、路线、美食、交通与建议时间。
+ */
+export type ItineraryStop = {
+  day: number;
+  time: string;
+  name: string;
+  activity: string;
+  note?: string;
+};
+
+export type ItineraryMapStop = { name: string; x: number; y: number };
+
+export type ItineraryTemplate = {
+  id: string;
+  theme: string;
+  themeShort: string;
+  title: string;
+  subtitle: string;
+  durationDays: number;
+  durationLabel: string;
+  suitable: string;
+  highlight: string;
+  routeSummary: string;
+  attractions: string[];
+  food: string[];
+  transport: string;
+  stops: ItineraryStop[];
+  map: ItineraryMapStop[];
+  accent: string;
+  note?: string;
+};
+
+export const ITINERARY_TEMPLATES: ItineraryTemplate[] = [
+  {
+    id: "hiking",
+    theme: "徒步或登山路线",
+    themeShort: "登山",
+    title: "鼓山登高 · 鼓岭云海一日",
+    subtitle: "登山古道、涌泉寺与鼓岭云海",
+    durationDays: 1,
+    durationLabel: "1 天",
+    suitable: "体力较好、喜欢徒步与山野",
+    highlight: "东南碑林 · 涌泉寺 · 鼓岭云海",
+    routeSummary: "地铁2号线鼓山站 → 徒步登山古道登顶 → 涌泉寺 → 午餐 → 缆车或步行下山 → 鼓岭观云海 → 返程",
+    attractions: [
+      "鼓山", "鼓岭", "福州国家森林公园", "石竹山风景区", "瑞岩山景区", "青云山风景区",
+      "永泰云顶景区", "永泰百漈沟景区", "永泰天门山风景区", "灵石山国家森林公园",
+      "三叠井国家森林公园", "福山郊野公园", "福道", "金鸡山公园", "福州日溪峡谷瀑布景区",
+      "飞云峡风景区", "雪峰山城罗汉台", "长乐猴屿洞天岩",
+    ],
+    food: ["鱼丸", "锅边糊", "鼓山素饼", "鼓岭农家菜"],
+    transport: "地铁2号线鼓山站出发；到鼓岭可乘公交29路或36路，或乘接驳小巴、自驾。",
+    stops: [
+      { day: 1, time: "08:00", name: "地铁2号线鼓山站", activity: "集合出发，准备饮水和轻便雨具。" },
+      { day: 1, time: "08:30", name: "鼓山登山古道", activity: "沿登山古道徒步登顶，沿途看摩崖题刻。", note: "全程步行强度较高，可按体力改乘缆车。" },
+      { day: 1, time: "11:00", name: "涌泉寺", activity: "参观“闽刹之冠”，看宋元明清摩崖石刻。" },
+      { day: 1, time: "12:00", name: "鼓山午餐", activity: "素斋、鱼丸或锅边糊，补充体力。" },
+      { day: 1, time: "13:30", name: "下山", activity: "乘缆车或步行下山，按体力选择。" },
+      { day: 1, time: "15:00", name: "鼓岭", activity: "逛鼓岭老街，天气合适时看云海。" },
+      { day: 1, time: "17:30", name: "返程", activity: "乘公交、接驳小巴或自驾返回市区。" },
+    ],
+    map: [
+      { name: "鼓山站", x: 30, y: 72 },
+      { name: "登山古道", x: 46, y: 62 },
+      { name: "涌泉寺", x: 62, y: 54 },
+      { name: "午餐", x: 56, y: 44 },
+      { name: "下山", x: 48, y: 36 },
+      { name: "鼓岭", x: 70, y: 26 },
+      { name: "返程", x: 40, y: 24 },
+    ],
+    accent: "#3f7d5a",
+    note: "登山与缆车受天气影响较大；鼓山、鼓岭和涌泉寺的开放时间请出行前核实。",
+  },
+  {
+    id: "heritage",
+    theme: "非遗体验路线",
+    themeShort: "非遗",
+    title: "坊巷非遗 · 闽剧一夜",
+    subtitle: "三坊七巷、上下杭手作与闽剧演出",
+    durationDays: 1,
+    durationLabel: "1 天",
+    suitable: "喜欢手作、戏曲与老城慢游",
+    highlight: "非遗博览苑 · 油纸伞工坊 · 闽剧",
+    routeSummary: "三坊七巷南后街 → 非遗博览苑 → 午餐 → 上下杭油纸伞工坊 → 晚间闽剧演出 → 返程",
+    attractions: ["三坊七巷", "上下杭", "闽越水镇", "中国寿山石馆景区", "春伦茉莉花文化创意产业园区"],
+    food: ["鱼丸", "肉燕", "芋泥", "太平燕", "锅边糊"],
+    transport: "地铁1号线东街口站或达道站；三坊七巷与上下杭街区内步行。",
+    stops: [
+      { day: 1, time: "09:00", name: "三坊七巷南后街", activity: "从南后街进入坊巷，看古厝与名人故居。" },
+      { day: 1, time: "10:00", name: "非遗博览苑", activity: "集中了解福州非遗项目与传承技艺。" },
+      { day: 1, time: "12:00", name: "午餐", activity: "鱼丸、肉燕、芋泥等福州小吃。" },
+      { day: 1, time: "14:00", name: "上下杭油纸伞工坊", activity: "体验油纸伞制作，了解传统手工艺。" },
+      { day: 1, time: "18:00", name: "闽剧演出", activity: "晚间看一场闽剧，感受福州方言戏曲。", note: "演出场次与票务需提前查询。" },
+      { day: 1, time: "20:30", name: "返程", activity: "步行或乘地铁返回。" },
+    ],
+    map: [
+      { name: "三坊七巷", x: 48, y: 40 },
+      { name: "非遗博览苑", x: 58, y: 46 },
+      { name: "午餐", x: 52, y: 56 },
+      { name: "上下杭", x: 40, y: 68 },
+      { name: "闽剧", x: 50, y: 74 },
+      { name: "返程", x: 34, y: 58 },
+    ],
+    accent: "#c05a3e",
+    note: "手作体验、闽剧场次和票价需以商家或剧场当天安排为准。",
+  },
+  {
+    id: "maritime",
+    theme: "海上丝绸之路路线",
+    themeShort: "海丝",
+    title: "海丝寻踪 · 船政与万国建筑",
+    subtitle: "烟台山、马尾船政与闽安古镇",
+    durationDays: 1,
+    durationLabel: "1 天",
+    suitable: "喜欢近代史、建筑与江海文化",
+    highlight: "万国建筑 · 船政文化城 · 闽安古镇",
+    routeSummary: "烟台山历史风貌区 → 午餐 → 马尾中国船政文化城 → 闽安古镇 → 返程",
+    attractions: ["烟台山万国建筑", "马尾中国船政文化城", "闽安古镇", "上下杭闽商古埠", "洪山古桥", "侯官文化旅游区", "中洲岛"],
+    food: ["海蛎煎", "鱼丸", "荔枝肉", "锅边糊"],
+    transport: "地铁1号线上藤站到烟台山；前往马尾可乘公交或自驾。",
+    stops: [
+      { day: 1, time: "09:00", name: "烟台山万国建筑", activity: "看近代领事馆、教堂与洋行建筑。" },
+      { day: 1, time: "11:30", name: "午餐", activity: "海蛎煎、鱼丸、荔枝肉等本地菜。" },
+      { day: 1, time: "13:30", name: "马尾中国船政文化城", activity: "参观船政博物馆与工业遗址。" },
+      { day: 1, time: "16:00", name: "闽安古镇", activity: "逛古镇街巷，了解闽江口海防与商贸。" },
+      { day: 1, time: "18:00", name: "返程", activity: "公交或自驾返回市区。" },
+    ],
+    map: [
+      { name: "烟台山", x: 34, y: 76 },
+      { name: "午餐", x: 42, y: 68 },
+      { name: "船政文化城", x: 70, y: 54 },
+      { name: "闽安古镇", x: 84, y: 42 },
+      { name: "返程", x: 58, y: 34 },
+    ],
+    accent: "#2f6f8f",
+    note: "船政文化城与闽安古镇相距较远，建议预留交通时间并核实展馆开放日。",
+  },
+  {
+    id: "hotspring",
+    theme: "温泉路线",
+    themeShort: "温泉",
+    title: "温泉之城 · 泡汤慢生活",
+    subtitle: "温泉博物馆、温泉公园与泡汤体验",
+    durationDays: 1,
+    durationLabel: "1 天",
+    suitable: "亲子、长辈同行或想放慢节奏",
+    highlight: "温泉博物馆 · 温泉公园 · 泡汤",
+    routeSummary: "福州温泉博物馆 → 温泉公园 → 午餐 → 泡汤 → 晚餐返程",
+    attractions: ["福州温泉博物馆", "源脉温泉园", "贵安温泉旅游区", "连江溪山休闲旅游度假村"],
+    food: ["佛跳墙", "太平燕", "芋泥", "温泉蛋"],
+    transport: "市区内乘公交或地铁；到贵安可自驾或乘景区大巴。",
+    stops: [
+      { day: 1, time: "10:00", name: "福州温泉博物馆", activity: "了解福州温泉城市史与温泉文化。" },
+      { day: 1, time: "11:00", name: "温泉公园", activity: "在公园内散步，感受温泉街区氛围。" },
+      { day: 1, time: "12:00", name: "午餐", activity: "佛跳墙、太平燕、芋泥等福州菜。" },
+      { day: 1, time: "14:00", name: "泡汤", activity: "选择市区温泉或贵安温泉，预留 2–3 小时。", note: "温泉场馆需提前确认营业时间、预约和年龄限制。" },
+      { day: 1, time: "18:00", name: "晚餐返程", activity: "晚餐后返回市区或住宿地。" },
+    ],
+    map: [
+      { name: "温泉博物馆", x: 44, y: 34 },
+      { name: "温泉公园", x: 56, y: 30 },
+      { name: "午餐", x: 50, y: 44 },
+      { name: "泡汤", x: 66, y: 56 },
+      { name: "返程", x: 44, y: 62 },
+    ],
+    accent: "#b07a3e",
+    note: "温泉场馆的营业时间、票价与预约规则差异较大，请以商家当天信息为准。",
+  },
+  {
+    id: "oldtown",
+    theme: "古厝街区路线",
+    themeShort: "古厝",
+    title: "古厝漫游 · 闽江夜色",
+    subtitle: "三坊七巷、上下杭与烟台山夜景",
+    durationDays: 1,
+    durationLabel: "1 天",
+    suitable: "第一次来福州、喜欢老街与夜景",
+    highlight: "坊巷古厝 · 上下杭 · 闽江夜景",
+    routeSummary: "三坊七巷 → 午餐 → 上下杭 → 傍晚烟台山看闽江夜景",
+    attractions: ["三坊七巷", "上下杭", "烟台山", "长乐和平街特色历史文化街区", "梁厝特色历史文化街区", "螺洲古镇"],
+    food: ["芋泥", "木金肉丸", "耳聋伯元宵", "锅边糊"],
+    transport: "地铁1号线东街口站、南门兜站或达道站；主要街区可全程步行。",
+    stops: [
+      { day: 1, time: "10:00", name: "三坊七巷", activity: "从南后街进入，慢逛坊巷与古厝。" },
+      { day: 1, time: "12:00", name: "午餐", activity: "芋泥、肉丸、元宵等福州小吃。" },
+      { day: 1, time: "14:00", name: "上下杭", activity: "看会馆、古桥与沿河商埠建筑。" },
+      { day: 1, time: "17:30", name: "烟台山", activity: "傍晚到烟台山看闽江夜景与近代建筑。" },
+      { day: 1, time: "19:30", name: "返程", activity: "步行或乘地铁返回。" },
+    ],
+    map: [
+      { name: "三坊七巷", x: 48, y: 38 },
+      { name: "午餐", x: 56, y: 48 },
+      { name: "上下杭", x: 40, y: 60 },
+      { name: "烟台山", x: 48, y: 76 },
+      { name: "返程", x: 32, y: 70 },
+    ],
+    accent: "#8a5a44",
+    note: "夜景受天气影响；三坊七巷内部分故居需单独预约或购票。",
+  },
+  {
+    id: "temple",
+    theme: "寺庙文化路线",
+    themeShort: "寺庙",
+    title: "古刹听钟 · 福州寺庙一日",
+    subtitle: "开元寺、西禅寺与鼓山涌泉寺",
+    durationDays: 1,
+    durationLabel: "1 天",
+    suitable: "喜欢古建筑、宗教文化与清静空间",
+    highlight: "开元寺 · 西禅寺 · 涌泉寺",
+    routeSummary: "市区开元寺 → 西禅寺 → 午餐 → 鼓山涌泉寺 → 返程",
+    attractions: ["鼓山涌泉寺", "西禅寺", "开元寺", "林阳寺", "屏山公园"],
+    food: ["素斋", "鼓山素饼", "芋泥"],
+    transport: "各寺公交均可达；鼓山可乘地铁2号线到鼓山站后换乘。",
+    stops: [
+      { day: 1, time: "08:30", name: "开元寺", activity: "参观市区古刹，感受城市中的寺院空间。" },
+      { day: 1, time: "10:30", name: "西禅寺", activity: "看殿宇与古荔，了解福州五大丛林。" },
+      { day: 1, time: "12:00", name: "午餐", activity: "素斋或附近福州小吃。" },
+      { day: 1, time: "14:00", name: "鼓山涌泉寺", activity: "参观“闽刹之冠”与摩崖石刻。" },
+      { day: 1, time: "17:00", name: "返程", activity: "乘地铁或公交返回市区。" },
+    ],
+    map: [
+      { name: "开元寺", x: 52, y: 38 },
+      { name: "西禅寺", x: 36, y: 48 },
+      { name: "午餐", x: 44, y: 56 },
+      { name: "涌泉寺", x: 74, y: 50 },
+      { name: "返程", x: 58, y: 34 },
+    ],
+    accent: "#6b6a3f",
+    note: "寺院开放时间与法会安排可能调整；入寺请遵守场所礼仪。",
+  },
+  {
+    id: "island",
+    theme: "海岛度假路线",
+    themeShort: "海岛",
+    title: "平潭蓝眼泪 · 海岛两日",
+    subtitle: "北港村、坛南湾与环岛骑行",
+    durationDays: 2,
+    durationLabel: "2 天",
+    suitable: "亲子、朋友结伴与海岛度假",
+    highlight: "北港村 · 坛南湾 · 环岛骑行",
+    routeSummary: "Day1 福州 → 平潭北港村 → 坛南湾沙滩；Day2 环岛骑行 → 跨海大桥返程",
+    attractions: ["平潭岛", "长乐海边", "罗源湾海洋世界", "长乐闽江河口国家湿地公园", "奇达村"],
+    food: ["海蛎煎", "鱼丸", "海鲜大排档", "八珍炒糕"],
+    transport: "自驾或乘动车至平潭；岛上建议租车或骑行。",
+    stops: [
+      { day: 1, time: "08:00", name: "福州出发", activity: "自驾或动车前往平潭，预留约 2 小时。" },
+      { day: 1, time: "11:00", name: "北港村", activity: "看石头厝与海边村落，安排午餐。" },
+      { day: 1, time: "14:00", name: "坛南湾沙滩", activity: "海边散步、看浪，按季节安排亲水活动。" },
+      { day: 1, time: "19:00", name: "蓝眼泪观测", activity: "蓝眼泪为季节性自然现象，按当晚预报安排。", note: "不保证一定看到；夜间海边注意安全。" },
+      { day: 2, time: "09:00", name: "环岛骑行", activity: "沿海岸线骑行，按体力选择路段。" },
+      { day: 2, time: "12:00", name: "海鲜午餐", activity: "海鲜大排档或本地小吃。" },
+      { day: 2, time: "15:00", name: "跨海大桥返程", activity: "自驾经跨海大桥返回福州。" },
+    ],
+    map: [
+      { name: "福州", x: 26, y: 32 },
+      { name: "北港村", x: 66, y: 54 },
+      { name: "坛南湾", x: 78, y: 66 },
+      { name: "环岛骑行", x: 70, y: 76 },
+      { name: "返程", x: 50, y: 48 },
+    ],
+    accent: "#2d7f8c",
+    note: "蓝眼泪为季节性自然现象，不保证看到；海岛天气、船班和骑行路线需出行前核实。",
+  },
+  {
+    id: "red",
+    theme: "红色主题路线",
+    themeShort: "红色",
+    title: "红色福州 · 两日研学",
+    subtitle: "西湖、永阳文化中心与红色旧址",
+    durationDays: 2,
+    durationLabel: "2 天",
+    suitable: "研学团队、亲子红色教育",
+    highlight: "永阳文化中心 · 冰心文学馆 · 南阳红色旅游区",
+    routeSummary: "Day1 福州西湖 → 永阳文化中心；Day2 冰心文学馆 → 福建省委旧址纪念馆 → 南阳红色旅游区",
+    attractions: ["福州西湖", "永阳文化中心", "冰心文学馆", "福建省委旧址纪念馆", "南阳红色旅游区"],
+    food: ["建议按所在区域选择当地餐馆"],
+    transport: "跨区点位建议自驾或包车；公共交通需提前查询班次。",
+    stops: [
+      { day: 1, time: "09:00", name: "福州西湖", activity: "从西湖开始，了解福州城市历史与人文景观。" },
+      { day: 1, time: "11:00", name: "前往永泰", activity: "自驾或包车前往永泰，途中安排午餐。" },
+      { day: 1, time: "14:00", name: "永阳文化中心", activity: "参观永泰地方文化展陈，开展研学记录。" },
+      { day: 1, time: "17:00", name: "住宿", activity: "返回市区或按团队安排住宿。" },
+      { day: 2, time: "09:00", name: "冰心文学馆", activity: "了解冰心生平与文学成就。" },
+      { day: 2, time: "11:00", name: "福建省委旧址纪念馆", activity: "参观红色旧址，开展党史学习教育。" },
+      { day: 2, time: "14:00", name: "南阳红色旅游区", activity: "走访红色遗址，按团队预约安排讲解。" },
+      { day: 2, time: "17:00", name: "返程", activity: "自驾或包车返回福州市区。" },
+    ],
+    map: [
+      { name: "福州西湖", x: 34, y: 40 },
+      { name: "永阳文化中心", x: 58, y: 34 },
+      { name: "冰心文学馆", x: 68, y: 54 },
+      { name: "省委旧址", x: 56, y: 66 },
+      { name: "南阳红色旅游区", x: 74, y: 74 },
+      { name: "返程", x: 42, y: 58 },
+    ],
+    accent: "#a83c32",
+    note: "原资料未提供本线路的路线、美食和交通信息；以上为按区域整理的参考安排，场馆开放与团队预约需提前核实。",
+  },
+];
+
+export const ITINERARY_THEMES = ["全部", ...ITINERARY_TEMPLATES.map((template) => template.themeShort)];
+
+export function getItineraryTemplate(id: string | undefined) {
+  return ITINERARY_TEMPLATES.find((template) => template.id === id);
+}

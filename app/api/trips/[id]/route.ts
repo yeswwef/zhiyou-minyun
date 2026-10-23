@@ -1,9 +1,17 @@
+/**
+ * @module-note app/api/trips/[id]/route.ts
+ * 旅行计划／指定id接口。HTTP请求进入具名方法后执行校验与业务处理，再以响应返回；权限、错误码和数据范围以各分支为准。
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getSessionUserId } from "@/lib/auth";
+import { guardVisitor } from "@/lib/roles";
 
 type TripItem = { resourceId: string; title: string; day?: number };
 
+/**
+ * 将外部传入的行程条目整理为受支持的资源结构。
+ * 输入：value；类型与可选项见函数签名。
+ */
 function normalizeItems(value: unknown): TripItem[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -16,14 +24,18 @@ function normalizeItems(value: unknown): TripItem[] {
     .filter((item) => item.resourceId);
 }
 
+/**
+ * 局部更新旅行计划／指定id数据，处理对应 PATCH 请求。
+ * 数据库操作：prisma.trip.findFirst、prisma.trip.update；注意相应的归属过滤与事务边界。
+ * 访问前执行游客角色检查，失败直接返回拒绝响应。
+ */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
-  }
+  const guard = await guardVisitor();
+  if (!guard.ok) return guard.response;
+  const userId = guard.userId;
 
   const { id } = await params;
   const existing = await prisma.trip.findFirst({ where: { id, userId } });
@@ -71,14 +83,18 @@ export async function PATCH(
   });
 }
 
+/**
+ * 删除或取消旅行计划／指定id数据，处理对应 DELETE 请求。
+ * 数据库操作：prisma.trip.findFirst、prisma.trip.delete；注意相应的归属过滤与事务边界。
+ * 访问前执行游客角色检查，失败直接返回拒绝响应。
+ */
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
-  }
+  const guard = await guardVisitor();
+  if (!guard.ok) return guard.response;
+  const userId = guard.userId;
 
   const { id } = await params;
   const existing = await prisma.trip.findFirst({ where: { id, userId } });
