@@ -1,3 +1,7 @@
+/**
+ * @module-note app/api/auth/me/route.ts
+ * 身份认证／当前用户资料接口。HTTP请求进入具名方法后执行校验与业务处理，再以响应返回；权限、错误码和数据范围以各分支为准。
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUser, getSessionUserId } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -11,6 +15,10 @@ const userSelect = {
   createdAt: true,
 } as const;
 
+/**
+ * 读取身份认证／当前用户资料数据，处理对应 GET 请求。
+ * 依赖当前会话身份，匿名访问和角色限制由下方分支处理。
+ */
 export async function GET() {
   const user = await getSessionUser();
   return NextResponse.json({ user });

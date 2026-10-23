@@ -1,3 +1,7 @@
+/**
+ * @module-note app/api/tickets/[id]/route.ts
+ * 票务项目／指定id接口。HTTP请求进入具名方法后执行校验与业务处理，再以响应返回；权限、错误码和数据范围以各分支为准。
+ */
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { slotDto } from "@/features/tickets/data";
@@ -9,6 +13,10 @@ import {
   ticketDetailCacheKey,
 } from "@/features/tickets/resilience";
 
+/**
+ * 读取票务项目／指定id数据，处理对应 GET 请求。
+ * 数据库操作：prisma.ticketItem.findFirst；注意相应的归属过滤与事务边界。
+ */
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   if (!/^[a-zA-Z0-9_-]{8,64}$/.test(id)) {

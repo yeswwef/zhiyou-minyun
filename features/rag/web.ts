@@ -1,6 +1,7 @@
 /** 百炼原生联网适配。搜索和网页读取在百炼执行，本项目不抓取网页、不写向量索引。 */
 import { config } from "./config";
 import { logged, ragLog } from "./logger";
+import { parseJson } from "./providers";
 import { readSse } from "./stream";
 import { safeWebUrl } from "./web-url";
 import type { WebSource } from "./types";
@@ -92,5 +93,96 @@ export async function searchAnswer(question: string, language: "zh" | "en", loca
     const result = validateWebResult(text, [...rows.values()], finish);
     ragLog("web.sources.validated", { returned: rows.size, cited: result.sources.length });
     return result;
+  });
+}
+
+type ResponsesItem = {
+  type?: unknown;
+  content?: { type?: unknown; text?: unknown }[];
+  action?: { sources?: { url?: unknown }[] };
+};
+type ResponsesPayload = { output?: ResponsesItem[] };
+
+/** 从搜索结果链接生成可读标题；只用于展示，不宣称网页标题已核验。 */
+function sourceTitle(url: string) {
+  const parsed = new URL(url);
+  const path = decodeURIComponent(parsed.pathname).replace(/\/+$/, "").slice(0, 80);
+  return `${parsed.hostname}${path}`.slice(0, 120);
+}
+
+/** 官方、百科与教育站点优先展示，减少社交平台链接占据来源列表。 */
+const SOCIAL_HOST = /(^|\.)(youtube\.com|youtu\.be|tiktok\.com|zhihu\.com|weibo\.com|xiaohongshu\.com|douyin\.com|tripadvisor\.[a-z.]+|instagram\.com|facebook\.com|x\.com|twitter\.com)$/i;
+
+function sourceRank(url: string) {
+  const host = new URL(url).hostname;
+  if (host.endsWith(".gov.cn") || host === "www.gov.cn") return 4;
+  if (host.endsWith(".edu.cn") || host.endsWith(".wikipedia.org")) return 3;
+  if (host.endsWith(".org.cn") || host.endsWith(".org")) return 2;
+  if (host.endsWith(".cn")) return 1;
+  return 0;
+}
+
+/**
+ * 千问AI平台的 Responses API 联网搜索：返回结构化讲解、去重后的网页来源和原文。
+ * 与百炼原生 search_info 接口不同，这里从 web_search_call.action.sources 读取链接。
+ */
+export async function responsesSearchAnswer(query: string) {
+  const c = config();
+  if (!c.key || !c.base) throw new Error("WEB_NOT_CONFIGURED");
+  if (!c.webEnabled) throw new Error("WEB_DISABLED");
+  return logged("web.responses", { model: c.webModel }, async () => {
+    const response = await fetch(`${c.base}/responses`, {
+      method: "POST", redirect: "error", cache: "no-store",
+      signal: AbortSignal.timeout(Math.max(c.webTimeoutMs, 90000)),
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${c.key}` },
+      body: JSON.stringify({
+        model: c.webModel,
+        input: `当前日期${new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Shanghai" })}。${query}。请联网搜索并使用简体中文；优先政府、文旅局、博物馆、景区官网等官方来源，排除视频和社交平台。只返回一个 JSON 对象：{"summary":"一句话概括","history":"历史背景","heritage":"相关非遗或文化知识点","notes":["需要核实的点"]}。事实必须来自搜索结果；不要编造数字、票价、开放时间或当前运营状态；不要输出 JSON 以外的解释。`,
+        tools: [{ type: "web_search" }],
+        enable_thinking: false,
+      }),
+    });
+    if (!response.ok) throw new Error(`WEB_HTTP_${response.status}`);
+    const data = (await response.json()) as ResponsesPayload;
+    const output = Array.isArray(data.output) ? data.output : [];
+
+    const messages = output.filter((item) => item.type === "message")
+      .flatMap((item) => Array.isArray(item.content) ? item.content : [])
+      .filter((part) => part.type === "output_text" && typeof part.text === "string")
+      .map((part) => String(part.text).trim()).filter(Boolean);
+    const raw = cleanWebText(messages.at(-1) ?? "").slice(0, 4000);
+    if (!raw) throw new Error("WEB_EMPTY_RESPONSE");
+
+    let structured: { summary?: string; history?: string; heritage?: string; notes?: string[] } | undefined;
+    try {
+      const value = parseJson(raw) as Record<string, unknown>;
+      const pick = (input: unknown, max: number) => typeof input === "string" ? input.trim().slice(0, max) : "";
+      structured = {
+        summary: pick(value.summary, 500),
+        history: pick(value.history, 1800),
+        heritage: pick(value.heritage, 1200),
+        notes: Array.isArray(value.notes)
+          ? value.notes.filter((item): item is string => typeof item === "string" && Boolean(item.trim()))
+            .map((item) => item.trim().slice(0, 120)).slice(0, 4)
+          : [],
+      };
+    } catch { /* 模型可能返回普通文本，保留原文作为补充。 */ }
+
+    const seen = new Set<string>();
+    const rows: WebSource[] = [];
+    for (const item of output) {
+      if (item.type !== "web_search_call") continue;
+      for (const source of item.action?.sources ?? []) {
+        const url = safeWebUrl(source?.url);
+        if (!url || seen.has(url)) continue;
+        if (SOCIAL_HOST.test(new URL(url).hostname)) continue;
+        seen.add(url);
+        rows.push({ id: "", title: sourceTitle(url), url, accessedAt: new Date().toISOString() });
+      }
+    }
+    const sources = rows.sort((a, b) => sourceRank(b.url) - sourceRank(a.url)).slice(0, 8)
+      .map((row, index) => ({ ...row, id: String(index + 1) }));
+    ragLog("web.responses.complete", { returned: rows.length, selected: sources.length, structured: Boolean(structured) });
+    return { ...(structured ?? {}), text: raw, sources };
   });
 }

@@ -1,3 +1,7 @@
+/**
+ * @module-note lib/redis.ts
+ * 公共服务层：被页面或接口复用；涉及数据库、会话和基础设施的逻辑应留在服务端。
+ */
 import "server-only";
 
 import Redis from "ioredis";
@@ -14,6 +18,9 @@ type RedisGlobal = typeof globalThis & {
 const redisGlobal = globalThis as RedisGlobal;
 const REDIS_RETRY_DELAY_MS = 30_000;
 
+/**
+ * 创建带连接与重试策略的 Redis 客户端。
+ */
 function createRedisClient() {
   const url = process.env.REDIS_URL?.trim();
   if (!url) return null;
@@ -32,6 +39,9 @@ function createRedisClient() {
   return client;
 }
 
+/**
+ * 复用可用的 Redis 客户端实例。
+ */
 function getRedisClient() {
   if (!process.env.REDIS_URL?.trim()) return null;
   if ((redisGlobal.ticketRedisDisabledUntil ?? 0) > Date.now()) return null;

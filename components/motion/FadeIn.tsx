@@ -1,3 +1,7 @@
+/**
+ * @module-note components/motion/FadeIn.tsx
+ * 共享界面组件：接收页面数据或处理局部交互，避免每个页面重复实现。
+ */
 "use client";
 
 import { motion } from "framer-motion";

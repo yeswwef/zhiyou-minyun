@@ -1,3 +1,7 @@
+/**
+ * @module-note components/BrandMark.tsx
+ * 共享界面组件：接收页面数据或处理局部交互，避免每个页面重复实现。
+ */
 /** 品牌徽章：山海（山 + 太阳 + 海浪）图形，替代原来的单「闽」字 */
 export function BrandMark({ size = 20 }: { size?: number }) {
   return (

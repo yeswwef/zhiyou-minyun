@@ -1,3 +1,7 @@
+/**
+ * @module-note app/api/auth/login/route.ts
+ * 身份认证／登录注册接口。HTTP请求进入具名方法后执行校验与业务处理，再以响应返回；权限、错误码和数据范围以各分支为准。
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import {
@@ -7,6 +11,10 @@ import {
   verifyPassword,
 } from "@/lib/auth";
 
+/**
+ * 提交或创建身份认证／登录注册数据，处理对应 POST 请求。
+ * 数据库操作：prisma.user.findUnique；注意相应的归属过滤与事务边界。
+ */
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const username = String(body?.username ?? "").trim();

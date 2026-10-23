@@ -1,3 +1,7 @@
+/**
+ * @module-note features/tickets/resilience.ts
+ * 票务基础能力：时段数据转换与缓存减压；库存正确性仍由预约接口数据库事务保证。
+ */
 import "server-only";
 
 import { createHash, randomUUID } from "node:crypto";
@@ -55,10 +59,17 @@ export type CachedResult<T> = {
   state: CacheState;
 };
 
+/**
+ * 为缓存有效期加入随机抖动，减少大批键同时失效。
+ * 输入：baseMs、jitterRatio；类型与可选项见函数签名。
+ */
 function jitteredTtl(baseMs: number, jitterRatio: number) {
   return Math.round(baseMs * (1 + Math.random() * jitterRatio));
 }
 
+/**
+ * 删除过期本地缓存并控制最大条目数。
+ */
 function compactMemoryCache() {
   const now = Date.now();
   for (const [key, item] of memoryCache) {
@@ -71,6 +82,10 @@ function compactMemoryCache() {
   }
 }
 
+/**
+ * 先查本地缓存，再查 Redis；读取值与逻辑新鲜截止时间。
+ * 输入：key；类型与可选项见函数签名。
+ */
 async function readEnvelope<T>(key: string): Promise<CacheEnvelope<T> | null> {
   const local = memoryCache.get(key);
   if (local && local.expiresAt > Date.now()) {
@@ -89,6 +104,10 @@ async function readEnvelope<T>(key: string): Promise<CacheEnvelope<T> | null> {
   return parsed;
 }
 
+/**
+ * 写入本地和 Redis 缓存，同时保存新鲜期与陈旧可用期。
+ * 输入：key、value、freshTtlMs、staleTtlMs；类型与可选项见函数签名。
+ */
 async function writeEnvelope<T>(
   key: string,
   value: T | null,
@@ -104,6 +123,10 @@ async function writeEnvelope<T>(
   await runRedis((redis) => redis.set(key, payload, "PX", freshTtlMs + staleTtlMs));
 }
 
+/**
+ * 通过 Redis NX 锁争取重建权，返回持有者令牌与分布式可用状态。
+ * 输入：key、ttlMs；类型与可选项见函数签名。
+ */
 async function acquireRebuildLock(key: string, ttlMs: number) {
   const token = randomUUID();
   const result = await runRedis((redis) => redis.set(`${key}:lock`, token, "PX", ttlMs, "NX"));
@@ -111,6 +134,10 @@ async function acquireRebuildLock(key: string, ttlMs: number) {
   return { distributed: true, token: result.value === "OK" ? token : null };
 }
 
+/**
+ * 用 Lua 比较持有者令牌后释放锁，避免误删他人的锁。
+ * 输入：key、token；类型与可选项见函数签名。
+ */
 async function releaseRebuildLock(key: string, token: string | null) {
   if (!token) return;
   await runRedis((redis) => redis.eval(
@@ -121,6 +148,10 @@ async function releaseRebuildLock(key: string, token: string | null) {
   ));
 }
 
+/**
+ * 锁竞争时优先返回陈旧数据，否则短暂等待其他请求完成重建。
+ * 输入：key、stale；类型与可选项见函数签名。
+ */
 async function waitForRebuild<T>(key: string, stale: CacheEnvelope<T> | null) {
   if (stale) return { value: stale.value, state: "STALE" as const };
   for (let attempt = 0; attempt < 12; attempt += 1) {
@@ -194,15 +225,26 @@ export async function getOrLoadTicketCache<T>({
   }
 }
 
+/**
+ * 按搜索词和类型摘要生成稳定的列表缓存键。
+ * 输入：q、type；类型与可选项见函数签名。
+ */
 export function ticketListCacheKey(q: string, type: string) {
   const digest = createHash("sha256").update(`${q}\0${type}`).digest("hex").slice(0, 20);
   return `list:${digest}`;
 }
 
+/**
+ * 按票务项目ID生成详情缓存键。
+ * 输入：id；类型与可选项见函数签名。
+ */
 export function ticketDetailCacheKey(id: string) {
   return `detail:${id}`;
 }
 
+/**
+ * 读取缓存命名空间版本，Redis不可用时使用本地版本。
+ */
 async function getTicketCacheVersion() {
   const remote = await runRedis((redis) => redis.get(`${CACHE_PREFIX}:version`));
   if (remote.available) {
@@ -218,12 +260,20 @@ export async function invalidateTicketCatalogCache() {
   await runRedis((redis) => redis.incr(`${CACHE_PREFIX}:version`));
 }
 
+/**
+ * 对代理IP信息做摘要作为限流维度；部署时需保证代理头可信。
+ * 输入：request；类型与可选项见函数签名。
+ */
 export function requestFingerprint(request: Request) {
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
   const raw = forwarded || request.headers.get("x-real-ip") || "local";
   return createHash("sha256").update(raw).digest("hex").slice(0, 20);
 }
 
+/**
+ * 使用 Redis 原子计数执行窗口限流，不可用时退回进程内计数。
+ * 输入：key、limit、windowMs；类型与可选项见函数签名。
+ */
 export async function consumeTicketRateLimit(key: string, limit: number, windowMs: number) {
   const redisKey = `${CACHE_PREFIX}:rate:${key}`;
   const remote = await runRedis((redis) => redis.eval(
@@ -261,6 +311,9 @@ export async function withBookingAdmission<T>(operation: () => Promise<T>): Prom
         if (index >= 0) bookingGate.waiting.splice(index, 1);
         reject(new BookingQueueBusyError());
       }, 2_000);
+      /**
+       * 释放等待中的任务并清理对应计时器。
+       */
       const release = () => {
         clearTimeout(timer);
         resolve();

@@ -1,3 +1,7 @@
+/**
+ * @module-note app/api/tickets/route.ts
+ * 票务项目接口。HTTP请求进入具名方法后执行校验与业务处理，再以响应返回；权限、错误码和数据范围以各分支为准。
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { slotDto } from "@/features/tickets/data";
@@ -11,6 +15,10 @@ import {
 
 const venueTypes = ["SCENIC", "MUSEUM", "PERFORMANCE"] as const;
 
+/**
+ * 读取票务项目数据，处理对应 GET 请求。
+ * 数据库操作：prisma.ticketItem.findMany；注意相应的归属过滤与事务边界。
+ */
 export async function GET(request: NextRequest) {
   const q = (request.nextUrl.searchParams.get("q")?.trim() ?? "").slice(0, 50);
   const requestedType = request.nextUrl.searchParams.get("type")?.trim() ?? "";

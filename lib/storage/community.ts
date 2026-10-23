@@ -1,3 +1,7 @@
+/**
+ * @module-note lib/storage/community.ts
+ * 公共服务层：被页面或接口复用；涉及数据库、会话和基础设施的逻辑应留在服务端。
+ */
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
@@ -11,12 +15,19 @@ const MIME_EXTENSIONS = new Map([
   ["image/webp", "webp"],
 ]);
 
+/**
+ * 解析社区图片上传目录。
+ */
 function uploadDirectory() {
   return path.join(process.cwd(), "public", "uploads", "community");
 }
 
 export class CommunityImageError extends Error {}
 
+/**
+ * 校验图片数量、大小及允许类型。
+ * 输入：files；类型与可选项见函数签名。
+ */
 export function validateCommunityImages(files: File[]) {
   if (files.length > COMMUNITY_MAX_IMAGES) {
     throw new CommunityImageError(`最多上传 ${COMMUNITY_MAX_IMAGES} 张图片`);
@@ -32,6 +43,10 @@ export function validateCommunityImages(files: File[]) {
   }
 }
 
+/**
+ * 写入已校验的图片并返回公开访问路径。
+ * 输入：files；类型与可选项见函数签名。
+ */
 export async function saveCommunityImages(files: File[]): Promise<string[]> {
   validateCommunityImages(files);
   if (!files.length) return [];
@@ -57,6 +72,10 @@ export async function saveCommunityImages(files: File[]): Promise<string[]> {
   }
 }
 
+/**
+ * 删除对应本地社区上传图片，限定操作在上传目录。
+ * 输入：urls；类型与可选项见函数签名。
+ */
 export async function deleteCommunityImages(urls: string[]) {
   const files = urls
     .filter((url) => url.startsWith("/uploads/community/"))

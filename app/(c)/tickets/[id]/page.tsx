@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/tickets/[id]/page.tsx
+ * 游客端／票务项目／指定id页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ */
 "use client";
 
 import Link from "next/link";
@@ -8,9 +12,17 @@ import { ArrowLeft, Clock3, MapPin, ShieldCheck, Users } from "lucide-react";
 type Slot = { id: string; startAt: string; endAt: string; remaining: number; crowd: { label: string; color: string } };
 type Item = { title: string; summary: string; description: string | null; notice: string | null; image: string | null; venue: { name: string; address: string }; slots: Slot[] };
 
+/**
+ * 渲染游客端／票务项目／指定id界面及其子组件。
+ * 接口协作：/api/tickets/${id}、/api/bookings。
+ */
 export default function TicketDetailPage() {
   const { id } = useParams<{id:string}>(); const router=useRouter(); const [item,setItem]=useState<Item|null>(null); const [slotId,setSlotId]=useState(""); const [quantity,setQuantity]=useState(1); const [contactName,setContactName]=useState(""); const [contactPhone,setContactPhone]=useState(""); const [message,setMessage]=useState(""); const [submitting,setSubmitting]=useState(false); const [loading,setLoading]=useState(true); const [loadError,setLoadError]=useState(""); const [retry,setRetry]=useState(0);
   useEffect(()=>{const controller=new AbortController();fetch(`/api/tickets/${id}`,{signal:controller.signal}).then(async response=>{const payload=await response.json();if(!response.ok)throw new Error(payload.error??"票务项目加载失败");setItem(payload.item??null);setSlotId(payload.item?.slots?.[0]?.id??"")}).catch(reason=>{if(!controller.signal.aborted)setLoadError(reason instanceof Error?reason.message:"票务项目加载失败")}).finally(()=>{if(!controller.signal.aborted)setLoading(false)});return()=>controller.abort()},[id,retry]);
+  /**
+   * 提交本页表单数据，处理服务端成功或失败结果。
+   * 接口协作：/api/bookings。
+   */
   async function submit(){setSubmitting(true);setMessage("");const res=await fetch("/api/bookings",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({slotId,quantity,contactName,contactPhone})});const data=await res.json();setSubmitting(false);if(res.status===401){router.push(`/login?next=/tickets/${id}`);return}if(!res.ok){setMessage(data.error??"预约失败");return}router.push("/profile/bookings");}
   if(loading) return <div className="min-h-screen bg-[#f8f3eb] py-24 text-center text-slate-500">正在加载…</div>;
   if(loadError||!item) return <div className="min-h-screen bg-[#f8f3eb] py-24 text-center"><p className="text-[#b83c2f]">{loadError||"票务项目不存在"}</p><button onClick={()=>{setLoading(true);setLoadError("");setRetry(value=>value+1)}} className="mt-4 rounded-lg bg-[#25332f] px-5 py-2 text-sm text-white">重新加载</button><Link href="/tickets" className="ml-3 text-sm text-slate-500">返回列表</Link></div>;

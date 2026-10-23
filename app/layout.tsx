@@ -1,3 +1,7 @@
+/**
+ * @module-note app/layout.tsx
+ * 应用根布局。服务端路由入口负责组装页面或跳转，复杂交互委托给客户端组件。
+ */
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
@@ -13,6 +17,9 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
+/**
+ * 渲染界面及其子组件。
+ */
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN" className="h-full antialiased">

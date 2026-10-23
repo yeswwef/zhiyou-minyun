@@ -1,3 +1,7 @@
+/**
+ * @module-note lib/auth.ts
+ * 公共服务层：被页面或接口复用；涉及数据库、会话和基础设施的逻辑应留在服务端。
+ */
 import { cookies } from "next/headers";
 import {
   createHmac,
@@ -10,6 +14,9 @@ import { prisma } from "./db";
 export const SESSION_COOKIE_NAME = "zhiyou_session";
 export const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 天
 
+/**
+ * 读取会话签名密钥；生产环境缺少配置时明确失败。
+ */
 function getSecret(): string {
   const secret = process.env.AUTH_SECRET?.trim();
   if (secret) return secret;
@@ -39,6 +46,10 @@ export function verifyPassword(password: string, stored: string): boolean {
   );
 }
 
+/**
+ * 使用 HMAC 对会话载荷签名，防止内容被篡改。
+ * 输入：payload；类型与可选项见函数签名。
+ */
 function sign(payload: string): string {
   return createHmac("sha256", getSecret()).update(payload).digest("base64url");
 }

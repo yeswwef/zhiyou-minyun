@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/login/page.tsx
+ * 游客端／登录注册页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ */
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -30,6 +34,10 @@ function nextPath() {
     : null;
 }
 
+/**
+ * 渲染游客端／登录注册界面及其子组件。
+ * 接口协作：/api/auth/me、/api/auth/login、/api/auth/register。
+ */
 export default function LoginPage() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>("login");
@@ -63,6 +71,9 @@ export default function LoginPage() {
       .catch(() => {});
   }, [router]);
 
+  /**
+   * 清空表单输入和提示，恢复初始状态。
+   */
   function reset() {
     setUsername("");
     setPassword("");
@@ -73,6 +84,11 @@ export default function LoginPage() {
     setRegRole("C");
   }
 
+  /**
+   * 提交本页表单数据，处理服务端成功或失败结果。
+   * 接口协作：/api/auth/login、/api/auth/register。
+   * 输入：event；类型与可选项见函数签名。
+   */
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");

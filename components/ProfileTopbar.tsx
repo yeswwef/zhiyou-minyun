@@ -1,3 +1,7 @@
+/**
+ * @module-note components/ProfileTopbar.tsx
+ * 共享界面组件：接收页面数据或处理局部交互，避免每个页面重复实现。
+ */
 "use client";
 
 import Link from "next/link";
@@ -8,6 +12,10 @@ import { Emblem } from "./Emblem";
 
 type UserInfo = { username: string; nickname: string | null };
 
+/**
+ * 渲染components／ProfileTopbar.tsx界面及其子组件。
+ * 接口协作：/api/auth/me、/api/auth/logout。
+ */
 export function ProfileTopbar() {
   const router = useRouter();
   const [user, setUser] = useState<UserInfo | null>(null);
@@ -21,6 +29,10 @@ export function ProfileTopbar() {
       .finally(() => setChecked(true));
   }, []);
 
+  /**
+   * 请求退出登录并跳转到登录或首页入口。
+   * 接口协作：/api/auth/logout。
+   */
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     router.push("/login");

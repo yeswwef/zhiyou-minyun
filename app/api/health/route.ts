@@ -1,3 +1,7 @@
+/**
+ * @module-note app/api/health/route.ts
+ * 健康检查接口。HTTP请求进入具名方法后执行校验与业务处理，再以响应返回；权限、错误码和数据范围以各分支为准。
+ */
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 

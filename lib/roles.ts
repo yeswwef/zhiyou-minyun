@@ -1,3 +1,7 @@
+/**
+ * @module-note lib/roles.ts
+ * 公共服务层：被页面或接口复用；涉及数据库、会话和基础设施的逻辑应留在服务端。
+ */
 import { NextResponse } from "next/server";
 import { getSessionUserId } from "./auth";
 import { prisma } from "./db";
@@ -37,6 +41,11 @@ export async function guardVisitor(): Promise<GuardResult> {
   return { ok: true, userId };
 }
 
+/**
+ * 校验后台管理员身份，返回用户ID或拒绝响应。
+ * 数据库操作：prisma.user.findUnique；注意相应的归属过滤与事务边界。
+ * 依赖当前会话身份，匿名访问和角色限制由下方分支处理。
+ */
 export async function guardAdmin(): Promise<GuardResult> {
   const userId = await getSessionUserId();
   if (!userId) {

@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/feature/[slug]/page.tsx
+ * 游客端／功能介绍／指定slug页面。服务端路由入口负责组装页面或跳转，复杂交互委托给客户端组件。
+ */
 import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
 
@@ -6,7 +10,6 @@ const FEATURE_CONTENT: Record<string, { title: string; eyebrow: string; descript
   assistant: { title: "AI文化问答", eyebrow: "AI CULTURE", description: "了解福州历史、街巷故事与本地文化。" },
   planner: { title: "旅游行程规划", eyebrow: "TRIP PLANNER", description: "根据时间与兴趣安排一份合适的福州行程。" },
   recognition: { title: "AI多模态识景", eyebrow: "AI RECOGNITION", description: "识别眼前景物，快速获取相关介绍。" },
-  "digital-guide": { title: "AI数字人讲解", eyebrow: "DIGITAL GUIDE", description: "用更自然的方式听一段福州景点讲解。" },
   tickets: { title: "票务预约", eyebrow: "TICKETS", description: "查看景区门票与活动预约信息。" },
   help: { title: "便民与应急", eyebrow: "TRAVEL HELP", description: "查找厕所、停车、充电、医疗与天气预警。" },
   shop: { title: "文旅商品购买", eyebrow: "LOCAL GOODS", description: "选购福州好物，支持现场取货或快递到家。" },
@@ -16,6 +19,9 @@ const FEATURE_CONTENT: Record<string, { title: string; eyebrow: string; descript
   events: { title: "官方活动", eyebrow: "OFFICIAL EVENTS", description: "浏览福州官方文旅活动并完成报名。" },
 };
 
+/**
+ * 渲染游客端／功能介绍／指定slug界面及其子组件。
+ */
 export default async function FeaturePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const feature = FEATURE_CONTENT[slug] ?? {

@@ -1,3 +1,7 @@
+/**
+ * @module-note app/api/bookings/route.ts
+ * 票务预约接口。HTTP请求进入具名方法后执行校验与业务处理，再以响应返回；权限、错误码和数据范围以各分支为准。
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { guardVisitor } from "@/lib/roles";
@@ -11,6 +15,11 @@ import {
 
 const bookingInclude = { slot: { include: { ticketItem: { include: { venue: true } } } } } as const;
 
+/**
+ * 读取票务预约数据，处理对应 GET 请求。
+ * 数据库操作：prisma.ticketBooking.findMany；注意相应的归属过滤与事务边界。
+ * 访问前执行游客角色检查，失败直接返回拒绝响应。
+ */
 export async function GET() {
   const guard = await guardVisitor();
   if (!guard.ok) return guard.response;
@@ -22,6 +31,11 @@ export async function GET() {
   return NextResponse.json({ ok: true, data: bookings.map((item) => ({ ...item, slot: slotDto(item.slot) })) });
 }
 
+/**
+ * 提交或创建票务预约数据，处理对应 POST 请求。
+ * 数据库操作：prisma.$transaction、tx.ticketSlot.findFirst、tx.ticketBooking.create、prisma.ticketSlot.findUnique、prisma.ticketSlot.findMany；注意相应的归属过滤与事务边界。
+ * 访问前执行游客角色检查，失败直接返回拒绝响应。
+ */
 export async function POST(request: NextRequest) {
   const guard = await guardVisitor();
   if (!guard.ok) return guard.response;
@@ -34,6 +48,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "请填写预约人姓名和正确的手机号" }, { status: 400 });
   }
 
+  // 用户、来源IP和热门时段三个维度限流，防止单一热点拖垮连接池。
   const [userRate, ipRate, slotRate] = await Promise.all([
     consumeTicketRateLimit(`booking:user:${guard.userId}`, 6, 10_000),
     consumeTicketRateLimit(`booking:ip:${requestFingerprint(request)}`, 20, 10_000),
@@ -67,6 +82,7 @@ export async function POST(request: NextRequest) {
       `;
       if (Number(claimed) !== 1) throw new Error("NO_CAPACITY");
 
+      // 容量更新与预约创建在同一事务：创建失败时容量更新也会回滚。
       return tx.ticketBooking.create({
         data: {
           bookingNo: ticketBookingNo(), verifyCode: ticketVerifyCode(), userId: guard.userId,
