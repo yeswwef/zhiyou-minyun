@@ -1,6 +1,6 @@
-// 智游闽韵 · 数据模型（空壳版）
-// 依据《搭建步骤书 v1》2.3 节：先建「账号 + 文旅资源 + 收藏 + 问答历史」四类核心表。
-// 后续模块（行程 / 票务 / 商品 / 社区 / 非遗）的表，等你确认需求后再逐步加。
+// 智游闽韵数据模型：账号、资源、社区、商城、课程、票务和聊天历史。
+// 模型修改需配套迁移；不要修改已执行迁移的SQL。
+// RAG向量独立存于 .data/rag/index.json。
 
 generator client {
   // Prisma 7 推荐的生成器（旧的 prisma-client-js 已废弃）
@@ -15,18 +15,21 @@ datasource db {
 
 // ---------- 枚举 ----------
 
+/// 账号角色边界。
 enum Role {
   C // C 端游客
   B // B 端商户 / 非遗传承人
   ADMIN // 平台后台管理员
 }
 
+/// 场馆类型。
 enum VenueType {
   SCENIC
   MUSEUM
   PERFORMANCE
 }
 
+/// 项目的草稿、开放、暂停和关闭状态。
 enum TicketStatus {
   DRAFT
   OPEN
@@ -34,11 +37,13 @@ enum TicketStatus {
   CLOSED
 }
 
+/// 时段是否开放。
 enum TicketSlotStatus {
   OPEN
   CLOSED
 }
 
+/// 预约状态；定义枚举不等于已实现全部自动流转任务。
 enum TicketBookingStatus {
   CONFIRMED
   VERIFIED
@@ -46,24 +51,63 @@ enum TicketBookingStatus {
   EXPIRED
 }
 
+/// 资源分类。
 enum ResourceType {
   SCENIC // 景点
   FOOD // 美食
   ICH // 非遗
 }
 
+/// 社区内容类别。
 enum CommunityPostType {
   CHECKIN
   REVIEW
 }
 
+/// 帖子发布状态。
 enum CommunityPostStatus {
   PUBLISHED
   HIDDEN
 }
 
+// 商品 / 体验课的上架状态
+/// 商户内容发布状态。
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+}
+
+// 商品类别：民宿 / 餐饮 / 非遗手作 / 伴手礼 / 研学体验
+/// 商品类别。
+enum ProductCategory {
+  HOMESTAY
+  DINING
+  HANDICRAFT
+  SOUVENIR
+  STUDYTOUR
+}
+
+// 订单状态流转：待支付 → 已支付 → 已核销；可取消
+/// 商城订单状态，不代表真实支付网关。
+enum OrderStatus {
+  PENDING
+  PAID
+  VERIFIED
+  CANCELLED
+}
+
+// 体验课报名状态
+/// 课程报名状态。
+enum EnrollmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  ATTENDED
+}
+
 // ---------- 账号 ----------
 
+/// 统一账号，role区分游客、商户和管理员，关联个人业务记录。
 model User {
   id                 String                  @id @default(cuid())
   username           String                  @unique
@@ -82,12 +126,19 @@ model User {
   communityComments  CommunityComment[]
   following          UserFollow[]            @relation("UserFollowing")
   followers          UserFollow[]            @relation("UserFollowers")
+  products           Product[]
+  merchantOrders     Order[]                 @relation("MerchantOrders")
+  buyerOrders        Order[]                 @relation("BuyerOrders")
+  studioWorks        StudioWork[]
+  experienceClasses  ExperienceClass[]
+  classEnrollments   ClassEnrollment[]
   ticketBookings     TicketBooking[]
   createdTicketItems TicketItem[]            @relation("TicketItemCreator")
 }
 
 // ---------- 文旅资源 ----------
 
+/// 文旅资源主体，承载景点、美食、非遗等资源详情。
 model Resource {
   id                   String          @id @default(cuid())
   slug                 String          @unique
@@ -117,12 +168,14 @@ model Resource {
   @@index([type])
 }
 
+/// 可复用的资源标签。
 model Tag {
   id        String        @id @default(cuid())
   name      String        @unique
   resources ResourceTag[]
 }
 
+/// 资源与标签的多对多关联。
 model ResourceTag {
   resourceId String
   tagId      String
@@ -132,6 +185,7 @@ model ResourceTag {
   @@id([resourceId, tagId])
 }
 
+/// 用户对文旅资源的收藏关系。
 model Favorite {
   id         String   @id @default(cuid())
   userId     String
@@ -145,6 +199,7 @@ model Favorite {
 
 // ---------- 行程 ----------
 
+/// 用户旅行计划，保存行程标题及资源条目。
 model Trip {
   id           String    @id @default(cuid())
   userId       String
@@ -161,6 +216,7 @@ model Trip {
 
 // ---------- 浏览足迹 ----------
 
+/// 资源浏览记录，供足迹和统计使用。
 model ResourceView {
   id         String   @id @default(cuid())
   userId     String
@@ -175,6 +231,7 @@ model ResourceView {
 
 // ---------- RAG 问答历史 ----------
 
+/// 按用户隔离的问答会话容器，不是向量知识库。
 model ChatSession {
   id        String        @id @default(cuid())
   userId    String?
@@ -188,6 +245,7 @@ model ChatSession {
   @@index([userId])
 }
 
+/// 会话消息、引用及耗时；向量另存本地索引。
 model ChatMessage {
   id        String      @id @default(cuid())
   sessionId String
@@ -203,6 +261,7 @@ model ChatMessage {
 
 // ---------- 文旅社区 ----------
 
+/// 社区打卡或评价帖子，关联作者与资源。
 model CommunityPost {
   id                   String                  @id @default(cuid())
   userId               String
@@ -229,6 +288,7 @@ model CommunityPost {
   @@index([type, createdAt])
 }
 
+/// 帖子图片及显示顺序，文件存于上传目录。
 model CommunityPostImage {
   id        String        @id @default(cuid())
   postId    String
@@ -239,6 +299,7 @@ model CommunityPostImage {
   @@index([postId, sortOrder])
 }
 
+/// 帖子点赞关系。
 model CommunityPostLike {
   id        String        @id @default(cuid())
   userId    String
@@ -251,6 +312,7 @@ model CommunityPostLike {
   @@index([postId, createdAt])
 }
 
+/// 帖子收藏，与文旅资源收藏Favorite区分。
 model CommunityPostFavorite {
   id        String        @id @default(cuid())
   userId    String
@@ -263,6 +325,7 @@ model CommunityPostFavorite {
   @@index([postId, createdAt])
 }
 
+/// 帖子评论及作者关系。
 model CommunityComment {
   id        String        @id @default(cuid())
   userId    String
@@ -277,6 +340,7 @@ model CommunityComment {
   @@index([userId, createdAt])
 }
 
+/// 用户关注关系，区分关注者和被关注者。
 model UserFollow {
   id          String   @id @default(cuid())
   followerId  String
@@ -290,8 +354,119 @@ model UserFollow {
   @@index([followerId, createdAt])
 }
 
+// ---------- 商户：商品上架 ----------
+
+/// 商户商品，存储分类、发布状态和整数分价格。
+model Product {
+  id          String          @id @default(cuid())
+  merchantId  String
+  category    ProductCategory
+  title       String
+  summary     String          @db.Text
+  description String?         @db.Text
+  price       Int // 单位：分
+  stock       Int             @default(0)
+  unit        String? // 单位，如「份」「晚」「人」
+  image       String?
+  location    String?
+  status      PublishStatus   @default(PUBLISHED)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  merchant    User            @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  orders      Order[]
+
+  @@index([merchantId, createdAt])
+  @@index([status, category, createdAt])
+}
+
+// ---------- 商户：订单管理 / 核销 ----------
+
+/// 商城订单，维护支付模拟和核销状态，与票务预约不同。
+model Order {
+  id         String      @id @default(cuid())
+  orderNo    String      @unique
+  productId  String
+  merchantId String
+  buyerId    String
+  quantity   Int         @default(1)
+  amount     Int // 单位：分
+  status     OrderStatus @default(PENDING)
+  verifyCode String      @unique
+  contact    String?
+  remark     String?
+  paidAt     DateTime?
+  verifiedAt DateTime?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  merchant   User        @relation("MerchantOrders", fields: [merchantId], references: [id], onDelete: Cascade)
+  buyer      User        @relation("BuyerOrders", fields: [buyerId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId, createdAt])
+  @@index([buyerId, createdAt])
+}
+
+// ---------- 非遗传承人数字工作室：作品展厅 ----------
+
+/// 商户发布的非遗作品。
+model StudioWork {
+  id          String   @id @default(cuid())
+  merchantId  String
+  title       String
+  description String   @db.Text
+  image       String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  merchant    User     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@index([merchantId, sortOrder])
+}
+
+// ---------- 非遗传承人数字工作室：线上预约体验课 ----------
+
+/// 商户体验课程资料与发布状态。
+model ExperienceClass {
+  id          String            @id @default(cuid())
+  merchantId  String
+  title       String
+  summary     String            @db.Text
+  price       Int               @default(0) // 单位：分
+  capacity    Int               @default(20)
+  schedule    String // 上课时间，如「每周六 14:00-16:00」
+  location    String?
+  image       String?
+  status      PublishStatus     @default(PUBLISHED)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  merchant    User              @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  enrollments ClassEnrollment[]
+
+  @@index([merchantId, createdAt])
+  @@index([status, createdAt])
+}
+
+/// 游客的课程报名及参与状态。
+model ClassEnrollment {
+  id        String           @id @default(cuid())
+  classId   String
+  userId    String
+  status    EnrollmentStatus @default(PENDING)
+  contact   String?
+  remark    String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  class     ExperienceClass  @relation(fields: [classId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, userId])
+  @@index([userId, createdAt])
+  @@index([classId, createdAt])
+}
+
 // ---------- 平台票务预约：后台统一管理 ----------
 
+/// 后台维护的景区、博物馆或演出场馆。
 model Venue {
   id        String       @id @default(cuid())
   type      VenueType
@@ -309,6 +484,7 @@ model Venue {
   @@index([type, enabled])
 }
 
+/// 场馆下的票务项目及开放状态。
 model TicketItem {
   id               String       @id @default(cuid())
   venueId          String
@@ -329,6 +505,7 @@ model TicketItem {
   @@index([createdByAdminId])
 }
 
+/// 分时时段与容量，已约数量由数据库事务更新。
 model TicketSlot {
   id               String           @id @default(cuid())
   ticketItemId     String
@@ -347,6 +524,7 @@ model TicketSlot {
   @@index([status, startAt])
 }
 
+/// 游客预约记录，关联时段、人数、联系人与核销状态。
 model TicketBooking {
   id           String              @id @default(cuid())
   bookingNo    String              @unique
@@ -366,4 +544,25 @@ model TicketBooking {
 
   @@index([userId, createdAt])
   @@index([slotId, status])
+}
+
+// ---------- 便民与应急 ----------
+
+/// 一键求助工单：仅在本平台登记，不接入公安或急救调度系统。
+/// 台风预警与景区闭园公告本期未实现，因此不含预警关联字段。
+model EmergencyRequest {
+  id        String    @id @default(cuid())
+  userId    String?
+  kind      String // MEDICAL / LOST / TRAPPED / OTHER
+  lat       Float
+  lng       Float
+  accuracy  Float?
+  note      String?   @db.Text
+  phone     String?
+  status    String    @default("pending") // pending / handled / closed
+  createdAt DateTime  @default(now())
+  handledAt DateTime?
+
+  @@index([status, createdAt])
+  @@index([userId])
 }

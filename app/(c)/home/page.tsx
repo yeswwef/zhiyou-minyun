@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/home/page.tsx
+ * 游客端／首页页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ */
 "use client";
 
 import {
@@ -13,7 +17,6 @@ import {
   MessageCircle,
   Map,
   MapPin,
-  Bot,
   ParkingCircle,
   PenLine,
   PhoneCall,
@@ -75,10 +78,10 @@ const STORIES = [
 ];
 
 const FACILITIES = [
-  { label: "厕所", detail: "附近公共卫生间", icon: Toilet, tone: "coral" },
-  { label: "停车场", detail: "查找停车位置", icon: ParkingCircle, tone: "sky" },
-  { label: "充电桩", detail: "新能源车补能", icon: BatteryCharging, tone: "mint" },
-  { label: "医疗点", detail: "附近医疗服务", icon: Hospital, tone: "rose" },
+  { label: "厕所", detail: "附近公共卫生间", href: "/help?type=TOILET", icon: Toilet, tone: "coral" },
+  { label: "停车场", detail: "查找停车位置", href: "/help?type=PARKING", icon: ParkingCircle, tone: "sky" },
+  { label: "充电桩", detail: "新能源车补能", href: "/help?type=CHARGING", icon: BatteryCharging, tone: "mint" },
+  { label: "医疗点", detail: "附近医疗服务", href: "/help?type=MEDICAL", icon: Hospital, tone: "rose" },
 ];
 
 const PRODUCTS = [
@@ -92,6 +95,10 @@ const EVENTS = [
   { title: "闽都古厝夜游季", date: "07.01 - 07.20", place: "鼓楼 · 三坊七巷", status: "即将开始" },
 ];
 
+/**
+ * 渲染游客端／首页界面及其子组件。
+ * 接口协作：/api/auth/me、/api/resources?recommended=true&limit=4。
+ */
 export default function CHome() {
   const [activeResource, setActiveResource] = useState(0);
   const [question, setQuestion] = useState("");
@@ -160,10 +167,10 @@ export default function CHome() {
 
           <nav className="main-nav" aria-label="主导航">
             <a className="active" href="#explore">发现</a>
-            <a href="#plan">行程</a>
+            <Link href="/plan">行程</Link>
             <Link href="/community">游记</Link>
-            <a href="#shop">商城</a>
-            <a href="#help">便民</a>
+            <Link href="/shop">商城</Link>
+            <Link href="/help">便民</Link>
           </nav>
 
           <div className="header-actions">
@@ -187,22 +194,23 @@ export default function CHome() {
           <span>首页</span>
         </a>
         <Link href="/profile"><UserRound size={18} /><span>用户中心</span></Link>
-        <a href="#ask"><MessageCircle size={18} /><span>AI文化问答</span></a>
-        <a href="#plan"><Route size={18} /><span>旅游行程规划</span></a>
+        <Link href="/ask"><MessageCircle size={18} /><span>AI文化问答</span></Link>
+        <Link href="/plan"><Route size={18} /><span>旅游行程规划</span></Link>
         <Link href="/resources"><Map size={18} /><span>文旅资源中心</span></Link>
-        <a href="#recognition"><ScanLine size={18} /><span>AI多模态识景</span></a>
-        <a href="#digital-guide"><Bot size={18} /><span>AI数字人讲解</span></a>
+        <Link href="/recognition"><ScanLine size={18} /><span>AI多模态识景</span></Link>
         <Link href="/tickets"><Ticket size={18} /><span>票务预约</span></Link>
-        <a href="#help"><ShieldCheck size={18} /><span>便民与应急</span></a>
-        <a href="#shop"><ShoppingBag size={18} /><span>文旅商品购买</span></a>
+        <Link href="/help"><ShieldCheck size={18} /><span>便民与应急</span></Link>
+        <Link href="/shop"><ShoppingBag size={18} /><span>文旅商品购买</span></Link>
         <Link href="/community"><UsersRound size={18} /><span>文旅社区</span></Link>
-        <a href="#learn"><GraduationCap size={18} /><span>非遗学习</span></a>
+        <Link href="/learn"><GraduationCap size={18} /><span>非遗学习</span></Link>
       </aside>
 
       <section className="home-search-wrap" aria-label="福州旅游搜索">
-        <form className="home-search" onSubmit={(event) => event.preventDefault()}>
+        <form className="home-search" action="/ask">
           <Search size={20} />
           <input
+            name="q"
+            maxLength={1000}
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
             placeholder="搜索福州景点、美食、住宿，或问问 AI"
@@ -270,10 +278,10 @@ export default function CHome() {
       </section>
 
       <section className="home-quick-grid" aria-label="常用服务">
-        <a href="#help"><ShieldCheck size={30} /><span><strong>便民与应急</strong><small>出行保障 · 应急求助 · 实用信息</small></span><ChevronRight size={17} /></a>
-        <a href="#plan"><Route size={30} /><span><strong>行程规划</strong><small>智能推荐 · 定制行程 · 路线地图</small></span><ChevronRight size={17} /></a>
+        <Link href="/help"><ShieldCheck size={30} /><span><strong>便民与应急</strong><small>出行保障 · 应急求助 · 实用信息</small></span><ChevronRight size={17} /></Link>
+        <Link href="/plan"><Route size={30} /><span><strong>行程规划</strong><small>智能推荐 · 定制行程 · 路线地图</small></span><ChevronRight size={17} /></Link>
         <a href="#destinations"><Map size={30} /><span><strong>旅游地图</strong><small>一键查看 · 景点分布 · 周边服务</small></span><ChevronRight size={17} /></a>
-        <a href="#ask"><MessageCircle size={30} /><span><strong>旅游咨询</strong><small>官方客服 · 政策查询 · 问题解答</small></span><ChevronRight size={17} /></a>
+        <Link href="/tickets"><Ticket size={30} /><span><strong>票务预约</strong><small>在线预约 · 分时入园 · 电子凭证</small></span><ChevronRight size={17} /></Link>
       </section>
 
       <section className="home-content-grid" aria-label="福州内容推荐">
@@ -306,9 +314,9 @@ export default function CHome() {
             <h2>你的福州，<em>从今天开始</em></h2>
             <p>不想做攻略？告诉我几天、几个人，以及你想要的节奏。</p>
           </div>
-          <a className="text-link" href="#planner">
+          <Link className="text-link" href="/plan">
             试试 AI 规划 <ArrowRight size={16} />
-          </a>
+          </Link>
         </div>
 
         <div className="plan-card">
@@ -318,9 +326,9 @@ export default function CHome() {
             </span>
             <h3>把想去的地方，<br /><em>串成一段好时光</em></h3>
             <p>从鼓山日出到上下杭夜色，为你生成一份合心意的专属路线。</p>
-            <a href="#planner" className="dark-button">
+            <Link href="/plan" className="dark-button">
               开始规划 <ArrowRight size={16} />
-            </a>
+            </Link>
           </div>
           <div className="plan-image" />
         </div>
@@ -366,7 +374,7 @@ export default function CHome() {
             <h2>便民与应急，<em>随手可查</em></h2>
             <p>厕所、停车、充电、医疗，一次把旅途需要的都安排好。</p>
           </div>
-          <a className="text-link" href="#facility-map">查看附近设施 <ArrowRight size={16} /></a>
+          <Link className="text-link" href="/help">查看附近设施 <ArrowRight size={16} /></Link>
         </div>
 
         <div className="help-grid">
@@ -379,21 +387,21 @@ export default function CHome() {
               <MapPin size={22} />
             </div>
             <div className="facility-items">
-              {FACILITIES.map(({ label, detail, icon: Icon, tone }) => (
-                <a href="#facility-map" className="facility-item" key={label}>
+              {FACILITIES.map(({ label, detail, href, icon: Icon, tone }) => (
+                <Link href={href} className="facility-item" key={label}>
                   <span className={`facility-icon ${tone}`}><Icon size={19} /></span>
                   <span><strong>{label}</strong><small>{detail}</small></span>
                   <ChevronRight size={15} />
-                </a>
+                </Link>
               ))}
             </div>
           </div>
 
           <div className="alert-panel">
-            <div className="alert-topline"><span><CloudRain size={15} /> 榕城天气提醒</span><b>今日 28° / 小雨</b></div>
-            <h3>沿海天气变化，<br /><em>提前知道更安心</em></h3>
-            <p>台风、暴雨、景区闭园通知会在这里及时更新。</p>
-            <div className="alert-actions"><a href="#weather"><CloudRain size={16} />天气预警</a><a href="#emergency"><PhoneCall size={16} />一键求助</a></div>
+            <div className="alert-topline"><span><CloudRain size={15} /> 榕城天气提醒</span><b>福州实时天气</b></div>
+            <h3>天气变化，<br /><em>提前知道更安心</em></h3>
+            <p>实况天气与未来三天预报、便民设施信息会在这里更新。</p>
+            <div className="alert-actions"><Link href="/help"><CloudRain size={16} />查看天气</Link><Link href="/help?help=1"><PhoneCall size={16} />一键求助</Link></div>
           </div>
         </div>
       </section>
@@ -405,7 +413,7 @@ export default function CHome() {
             <h2>把喜欢的福州，<em>带回家</em></h2>
             <p>商户精选上架，支持现场取货和快递到家。</p>
           </div>
-          <a className="text-link" href="#shop-all">逛文旅商城 <ArrowRight size={16} /></a>
+          <Link className="text-link" href="/shop">逛文旅商城 <ArrowRight size={16} /></Link>
         </div>
 
         <div className="product-grid">
@@ -446,10 +454,10 @@ export default function CHome() {
       </section>
 
       <section className="section-wrap learning-section" id="learn">
-        <div className="learning-card"><div className="learning-copy"><span className="plan-badge"><GraduationCap size={14} /> INTANGIBLE HERITAGE</span><h2>跟着匠人，<br /><em>学一门福州手艺</em></h2><p>线上预约体验课，也可以先逛一逛非遗线上展厅。</p><div className="learning-actions"><a href="#classes">预约体验课 <ArrowRight size={15} /></a><a href="#museum"><Landmark size={15} />线上展厅</a></div></div><div className="learning-image" /></div>
+        <div className="learning-card"><div className="learning-copy"><span className="plan-badge"><GraduationCap size={14} /> INTANGIBLE HERITAGE</span><h2>跟着匠人，<br /><em>学一门福州手艺</em></h2><p>线上预约体验课，也可以先逛一逛非遗线上展厅。</p><div className="learning-actions"><Link href="/learn">预约体验课 <ArrowRight size={15} /></Link><Link href="/learn"><Landmark size={15} />线上展厅</Link></div></div><div className="learning-image" /></div>
       </section>
 
-      <footer className="site-footer"><div className="footer-inner"><div className="brand-lockup"><span className="brand-mark"><BrandMark size={22} /></span><span><strong>智游闽韵</strong><small>有福之州 · 文旅智能平台</small></span></div><div className="footer-links"><a href="#about">关于我们</a><a href="#help">帮助中心</a><a href="#privacy">隐私政策</a><a href="#source">数据来源与授权</a></div><p>© 2026 智游闽韵 · 让每一次抵达，都有福相伴</p></div></footer>
+      <footer className="site-footer"><div className="footer-inner"><div className="brand-lockup"><span className="brand-mark"><BrandMark size={22} /></span><span><strong>智游闽韵</strong><small>有福之州 · 文旅智能平台</small></span></div><div className="footer-links"><a href="#about">关于我们</a><Link href="/help">帮助中心</Link><a href="#privacy">隐私政策</a><a href="#source">数据来源与授权</a></div><p>© 2026 智游闽韵 · 让每一次抵达，都有福相伴</p></div></footer>
     </main>
   );
 }

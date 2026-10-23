@@ -1,12 +1,21 @@
+/**
+ * @module-note app/(c)/tickets/page.tsx
+ * 游客端／票务项目页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ */
 "use client";
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { CalendarDays, MapPin, Search, Ticket, Users } from "lucide-react";
+import { BrandMark } from "@/components/BrandMark";
 
 type TicketItem = { id: string; title: string; summary: string; image: string | null; venue: { name: string; address: string; type: string }; slots: Array<{ id: string; startAt: string; remaining: number; crowd: { label: string; color: string } }> };
 const types = [["", "全部"], ["SCENIC", "景区"], ["MUSEUM", "博物馆"], ["PERFORMANCE", "演出"]] as const;
 
+/**
+ * 渲染游客端／票务项目界面及其子组件。
+ * 接口协作：/api/tickets?q=${encodeURIComponent(q)}&type=${type}。
+ */
 export default function TicketsPage() {
   const [items, setItems] = useState<TicketItem[]>([]); const [q, setQ] = useState(""); const [type, setType] = useState(""); const [loading, setLoading] = useState(true); const [error, setError] = useState(""); const [retry, setRetry] = useState(0);
   useEffect(() => {
@@ -27,6 +36,21 @@ export default function TicketsPage() {
     return () => { window.clearTimeout(timer); controller.abort(); };
   }, [q, type, retry]);
   return <main className="min-h-screen bg-[#f8f3eb] text-[#25332f]">
+    {/* 顶部导航：与资源页共用同一套全局样式（resource-site-nav），含返回首页入口 */}
+    <header className="resource-site-nav">
+      <a href="/home" className="resource-brand">
+        <span><BrandMark size={19} /></span>
+        <strong>智游闽韵</strong>
+        <small>FUZHOU TRAVEL</small>
+      </a>
+      <nav>
+        <a href="/home">发现</a>
+        <a href="/plan">行程</a>
+        <a href="/home#stories">游记</a>
+        <Link className="active" href="/tickets">票务预约</Link>
+      </nav>
+      <a href="/home" className="resource-user">返回首页</a>
+    </header>
     <section className="border-b border-[#eadfd0] bg-[linear-gradient(120deg,#fffaf3,#f5e6d4)] px-5 py-14"><div className="mx-auto max-w-6xl"><p className="mb-3 text-xs font-semibold tracking-[.28em] text-[#b54832]">FUJIAN CULTURE · SMART BOOKING</p><h1 className="font-serif text-4xl md:text-5xl">福州文旅票务预约</h1><p className="mt-4 max-w-2xl text-[#68736f]">景区、博物馆与演出统一预约。实时查看余票与拥挤程度，选择更舒适的出行时段。</p></div></section>
     <section className="mx-auto max-w-6xl px-5 py-8"><div className="rounded-2xl border border-[#e7ded2] bg-white p-4 shadow-sm"><div className="flex items-center gap-3 rounded-xl bg-[#f7f5f1] px-4"><Search size={18} className="text-slate-400"/><input value={q} onChange={(e) => setQ(e.target.value)} className="h-12 w-full bg-transparent outline-none" placeholder="搜索景区、博物馆或演出"/></div><div className="mt-4 flex flex-wrap gap-2">{types.map(([value,label]) => <button key={value} onClick={() => setType(value)} className={`rounded-full px-5 py-2 text-sm ${type===value ? "bg-[#b9352b] text-white" : "bg-[#f4f1ec] text-[#65706c]"}`}>{label}</button>)}</div></div>
       <div className="mt-8 flex items-end justify-between"><h2 className="font-serif text-2xl">可预约项目</h2><span className="text-sm text-slate-500">共 {items.length} 项</span></div>

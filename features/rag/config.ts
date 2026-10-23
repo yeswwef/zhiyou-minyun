@@ -14,6 +14,9 @@ export function config() {
     key: process.env.RAG_API_KEY || process.env.DASHSCOPE_API_KEY || "",
     base: (process.env.RAG_MODEL_BASE_URL || process.env.DASHSCOPE_BASE_URL || "").replace(/\/$/, ""),
     model: process.env.LLM_MODEL || "qwen-plus",
+    // 视觉模型必须单独配置：文本模型（qwen-plus）看不到图片，实测会把纯红图答成蓝色。
+    // 2026-10-21 修正：识景此前误用 model，导致识别结果恒为「未知」。
+    vl: process.env.VL_MODEL || "qwen3-vl-plus",
     // 联网独立模型与开关；现有兼容接口模型不一定支持原生联网。
     webEnabled: process.env.RAG_WEB_ENABLED !== "false",
     webModel: process.env.RAG_WEB_MODEL || "qwen-plus",

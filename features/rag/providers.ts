@@ -133,3 +133,57 @@ async function rerankInternal(query: string, documents: string[]): Promise<{ ind
     return { index: row.index, score: row.relevance_score };
   });
 }
+
+/** 与 post 相同的 JSON 请求，但允许自定义超时；供多模态识图与结构化生成使用。 */
+async function postModel(url: string, payload: unknown, timeoutMs = 60000) {
+  const c = config();
+  if (!c.key) throw new Error("MODEL_NOT_CONFIGURED");
+  const response = await fetch(url, {
+    method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${c.key}` },
+    body: JSON.stringify(payload), signal: AbortSignal.timeout(timeoutMs), cache: "no-store",
+  });
+  if (!response.ok) throw new Error(`MODEL_HTTP_${response.status}`);
+  return response.json();
+}
+
+/**
+ * 调用多模态模型识别图片，要求返回结构化 JSON 文本。
+ * 输入：system、prompt、imageUrl；类型与可选项见函数签名。
+ */
+export async function chatVision(system: string, prompt: string, imageUrl: string): Promise<string> {
+  return logged("vision.identify", { model: config().vl }, async () => {
+    const c = config();
+    if (!c.key) throw new Error("MODEL_NOT_CONFIGURED");
+    const data = await postModel(`${c.base}/chat/completions`, {
+      model: c.vl, temperature: 0, max_tokens: 1200, enable_thinking: false,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: [
+          { type: "image_url", image_url: { url: imageUrl } },
+          { type: "text", text: prompt },
+        ] },
+      ],
+    }, 60000);
+    const content = data?.choices?.[0]?.message?.content;
+    if (typeof content !== "string" || !content.trim() || content.length > 20000) throw new Error("INVALID_VISION_RESPONSE");
+    return content;
+  });
+}
+
+/**
+ * 非思考模式的结构化生成，用于识景讲解、行程规划等需要稳定 JSON 输出的场景。
+ * 输入：system、user；类型与可选项见函数签名。
+ */
+export async function chatStructured(system: string, user: string, maxTokens = 1600): Promise<string> {
+  return logged("structured.generate", { model: config().model }, async () => {
+    const c = config();
+    if (!c.key) throw new Error("MODEL_NOT_CONFIGURED");
+    const data = await postModel(`${c.base}/chat/completions`, {
+      model: c.model, temperature: 0, max_tokens: maxTokens, enable_thinking: false,
+      messages: [{ role: "system", content: system }, { role: "user", content: user }],
+    }, 60000);
+    const content = data?.choices?.[0]?.message?.content;
+    if (typeof content !== "string" || !content.trim() || content.length > 20000) throw new Error("INVALID_CHAT_RESPONSE");
+    return content;
+  });
+}
