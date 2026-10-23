@@ -1,0 +1,152 @@
+/* 便民与应急页局部样式：与识景页共用同一套设计令牌（coral 主色 + serif 标题 + 暖白底）。 */
+.shell{--coral:#df6046;--ink:#303730;--muted:#96928a;min-height:100vh;background:#faf9f6;color:var(--ink);font-family:var(--font-noto-sans),sans-serif;font-size:14px}
+.shell *{box-sizing:border-box}
+.shell a{text-decoration:none;color:inherit}
+.shell button{font:inherit;cursor:pointer}
+.shell button:disabled{cursor:not-allowed;opacity:.55}
+.shell button:focus-visible,.shell a:focus-visible,.shell summary:focus-visible{outline:2px solid #c84930;outline-offset:3px}
+
+.header{height:78px;position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:0 34px;background:rgba(255,255,255,.96);border-bottom:1px solid #eee9e1;backdrop-filter:blur(14px)}
+.brand{display:flex;align-items:center;gap:12px;flex-shrink:0}
+.brandIcon{display:grid;place-items:center;width:43px;height:43px;border-radius:11px 4px 11px 4px;color:#fff;background:#e9694e}
+.brand strong{display:block;font-family:var(--font-noto-serif);font-size:23px;letter-spacing:2px;line-height:1.15}
+.brand small{display:block;font-size:8px;letter-spacing:3px;color:#a5a196;margin-top:3px}
+.header nav{display:flex;gap:34px;color:#5a5c56;font-size:13px}
+.header nav a:hover{color:var(--coral)}
+.back{display:flex;align-items:center;gap:6px;flex-shrink:0;color:#8d887d;font-size:12px;border:1px solid #e8e1d7;border-radius:20px;padding:8px 14px;background:#fffdf9}
+.back:hover{color:var(--coral);border-color:#e8c4b6}
+
+.main{position:relative;max-width:1180px;margin:0 auto;padding:38px 34px 90px}
+.hero{position:relative;z-index:1;max-width:760px;margin-bottom:26px}
+.kicker{margin:0 0 12px;color:#c27a5d;font-size:10px;letter-spacing:3px;font-weight:600}
+.hero h1{margin:0;font-family:var(--font-noto-serif);font-size:38px;font-weight:600;line-height:1.35;letter-spacing:1px}
+.hero h1 em{font-style:normal;color:var(--coral)}
+.lead{margin:14px 0 0;color:#85847c;font-size:14px;line-height:1.9;max-width:660px}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.tags span{border:1px solid #ead9cc;background:#fffaf3;color:#b47957;border-radius:20px;padding:5px 12px;font-size:11px}
+
+/* ---- 天气条 ---- */
+.weatherBar{position:relative;z-index:1;display:flex;flex-direction:column;gap:12px;margin:0 0 22px;padding:16px 20px;border:1px solid #eee9e2;border-radius:14px;background:linear-gradient(120deg,#fffdf9,#fdf6ef)}
+.weatherRow{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.weatherMain{display:flex;align-items:center;gap:12px}
+.weatherIcon{display:grid;place-items:center;width:46px;height:46px;border-radius:12px;background:#fcece6;color:var(--coral)}
+.weatherMain strong{display:block;font-family:var(--font-noto-serif);font-size:24px;line-height:1.1}
+.weatherMain small{display:block;margin-top:3px;color:#9a948a;font-size:11px}
+.forecast{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
+.cast{min-width:92px;padding:8px 12px;border:1px solid #f0e7db;border-radius:10px;background:#fff;text-align:center}
+.cast b{display:block;font-size:11px;color:#8d887d;font-weight:500}
+.cast span{display:block;margin:4px 0 2px;font-size:12px;color:#4d554c}
+.cast small{color:#b0a99c;font-size:10px}
+.weatherDegraded{display:flex;align-items:center;gap:8px;color:#a87935;font-size:12px}
+
+/* 天气详情（点击「详情」展开） */
+.weatherMore{display:inline-flex;align-items:center;gap:6px;margin-left:auto;padding:8px 14px;border:1px solid #e8e1d7;border-radius:20px;background:#fff;color:#8d887d;font-size:12px}
+.weatherMore:hover{border-color:#e8c4b6;color:var(--coral)}
+.chevOpen{transform:rotate(180deg)}
+.weatherDetail{display:flex;flex-direction:column;gap:12px;padding-top:14px;border-top:1px dashed #eadfd2}
+.weatherStats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px}
+.weatherStats>div{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid #f0e7db;border-radius:10px;background:#fff}
+.weatherStats span{color:#a49d91;font-size:10px}
+.weatherStats b{color:#3f4a44;font-size:14px;font-weight:600}
+.weatherTableWrap{overflow-x:auto;border:1px solid #f0e7db;border-radius:10px;background:#fff}
+.weatherTable{width:100%;border-collapse:collapse;font-size:12px;min-width:520px}
+.weatherTable th{padding:9px 12px;text-align:left;background:#fdf7f0;color:#8d887d;font-weight:600;font-size:11px;white-space:nowrap}
+.weatherTable td{padding:9px 12px;border-top:1px solid #f4ece2;color:#5d6660;white-space:nowrap}
+.weatherTable tr:hover td{background:#fffdf9}
+.weatherFoot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;color:#a49d91;font-size:10px;line-height:1.7}
+.refreshBtn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border:1px solid #e8e1d7;border-radius:20px;background:#fff;color:#8d887d;font-size:11px}
+.refreshBtn:hover:not(:disabled){border-color:#e8c4b6;color:var(--coral)}
+.weatherNote{margin:0;color:#b0a99c;font-size:10px;line-height:1.7}
+
+/* ---- 类型 Tab ---- */
+.tabs{position:relative;z-index:1;display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.tab{display:flex;align-items:center;gap:8px;padding:10px 16px;border:1px solid #eae3d9;border-radius:10px;background:#fffdf9;color:#75786f;font-size:13px}
+.tab:hover{border-color:#e3cabb;color:var(--coral)}
+.tabActive{border-color:#e79e86;background:#fdf1ec;color:#c9593f;font-weight:600}
+.tabIcon{display:grid;place-items:center}
+
+.listHead{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.listHead h2{margin:0;font-family:var(--font-noto-serif);font-size:19px;font-weight:600}
+.listHead small{color:#a49d91;font-size:11px}
+.badgeSource{border-radius:20px;padding:3px 10px;font-size:10px;font-weight:600}
+.badgeAmap{border:1px solid #cfe0c6;background:#f2f8ee;color:#5f7f58}
+.badgeSeed{border:1px solid #f0ddba;background:#fdf7ea;color:#a87935}
+.noteBar{display:flex;align-items:center;gap:7px;margin:0 0 12px;padding:9px 12px;border-radius:8px;background:#fdf7ea;border:1px solid #f0ddba;color:#9a6f31;font-size:11px}
+
+.facilityList{position:relative;z-index:1;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.facilityCard{display:flex;flex-direction:column;gap:10px;padding:16px 18px;border:1px solid #eee9e2;border-radius:13px;background:#fff;box-shadow:0 8px 24px #66513c06}
+.facilityCard:hover{border-color:#e3cabb}
+.facTop{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.facName{margin:0;font-size:15px;font-weight:600;line-height:1.5;color:#3f4a44;overflow-wrap:anywhere}
+.facDistance{flex-shrink:0;border-radius:20px;background:#fcece6;color:#c9593f;font-size:11px;font-weight:600;padding:4px 10px;white-space:nowrap}
+.facMeta{margin:0;color:#8d887d;font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.facActions{display:flex;gap:8px;margin-top:2px}
+.navBtn,.callBtn{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:8px;font-size:12px;border:1px solid #e8e1d7;background:#fffdf9;color:#75786f}
+.navBtn:hover,.callBtn:hover{border-color:#e8c4b6;color:var(--coral)}
+.callBtn{border-color:#cfe0c6;background:#f5f9f2;color:#5f7f58}
+.callBtn:hover{border-color:#a9c79c;color:#4b6a45}
+
+.stateBox{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:240px;padding:30px;border:1px dashed #e6ded2;border-radius:14px;background:#fffdf9;text-align:center;color:#9a948a;font-size:12px;line-height:1.8}
+.stateIcon{display:grid;place-items:center;width:60px;height:60px;border-radius:50%;background:#fcece6;color:var(--coral)}
+.stateBox strong{font-family:var(--font-noto-serif);font-size:17px;color:#4d554c;font-weight:600}
+.spinner{animation:spin 1.1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.errorBox{border-style:solid;border-color:#f0d5cb;background:#fdf0eb;color:#b8543e}
+.errorBox .stateIcon{background:#fbe3db}
+
+/* ---- 求助悬浮按钮 ---- */
+.helpFab{position:fixed;right:28px;bottom:28px;z-index:40;display:flex;align-items:center;gap:9px;padding:14px 20px;border:0;border-radius:30px;background:linear-gradient(135deg,#e97456,#d9533a);color:#fff;font-size:14px;font-weight:600;box-shadow:0 12px 30px #df604644}
+.helpFab:hover{filter:brightness(1.05)}
+
+/* ---- 求助弹层 ---- */
+.mask{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:20px;background:#2d2a2699;backdrop-filter:blur(3px)}
+.modal{width:min(520px,100%);max-height:88vh;overflow:auto;border-radius:16px;background:#fffdf9;box-shadow:0 24px 60px #2d2a2655}
+.modalHead{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:20px 22px 0}
+.modalHead h2{margin:0;font-family:var(--font-noto-serif);font-size:21px;font-weight:600}
+.modalHead p{margin:6px 0 0;color:#a49d91;font-size:11px;line-height:1.7}
+.closeBtn{display:grid;place-items:center;width:32px;height:32px;border:1px solid #ece5db;border-radius:50%;background:#fff;color:#9a948a}
+.closeBtn:hover{color:var(--coral);border-color:#e8c4b6}
+.modalBody{padding:16px 22px 22px;display:flex;flex-direction:column;gap:14px}
+.kindGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.kindOption{padding:11px 12px;border:1px solid #eae3d9;border-radius:10px;background:#fff;color:#6f7268;font-size:12px;text-align:left}
+.kindOption:hover{border-color:#e3cabb}
+.kindActive{border-color:#e79e86;background:#fdf1ec;color:#c9593f;font-weight:600}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;color:#8d887d}
+.textarea,.input{border:1px solid #e8e1d7;border-radius:9px;background:#fff;padding:10px 12px;font-size:13px;color:#3f4a44;font-family:inherit}
+.textarea{min-height:78px;resize:vertical}
+.textarea:focus,.input:focus{outline:2px solid #e79e86;outline-offset:1px;border-color:#e79e86}
+.locationLine{display:flex;align-items:center;gap:7px;color:#8d887d;font-size:11px}
+.modalActions{display:flex;gap:10px;justify-content:flex-end}
+.cancelBtn{padding:11px 18px;border:1px solid #e8e1d7;border-radius:9px;background:#fffdf9;color:#8d887d;font-size:13px}
+.submitBtn{display:inline-flex;align-items:center;gap:7px;padding:11px 20px;border:0;border-radius:9px;background:linear-gradient(135deg,#e97456,#d9533a);color:#fff;font-size:13px;font-weight:600}
+.submitBtn:hover:not(:disabled){filter:brightness(1.04)}
+
+.ticket{display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid #d8e6cf;border-radius:12px;background:#f5faf1}
+.ticketHead{display:flex;align-items:center;gap:9px;color:#4f7048;font-size:13px;font-weight:600}
+.ticketId{margin:0;font-size:11px;color:#7c8f74;overflow-wrap:anywhere}
+.nearestList{display:grid;gap:8px}
+.nearestRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #e2ebdc;border-radius:9px;background:#fff}
+.nearestRow b{display:block;font-size:12px;color:#3f4a44;font-weight:600;line-height:1.6}
+.nearestRow small{color:#9aa792;font-size:10px}
+.disclaimer{margin:0;padding:11px 13px;border-radius:8px;background:#fdf7ea;border:1px solid #f0ddba;color:#9a6f31;font-size:11px;line-height:1.8}
+
+@media(max-width:860px){
+  .header nav{display:none}
+  .main{padding:28px 20px 100px}
+  .hero h1{font-size:31px}
+  .forecast{margin-left:0;width:100%}
+  .facilityList{grid-template-columns:1fr}
+  .helpFab{right:16px;bottom:16px;padding:12px 17px;font-size:13px}
+}
+@media(max-width:560px){
+  .header{height:66px;padding:0 16px;gap:12px}
+  .brand strong{font-size:20px}
+  .brandIcon{width:36px;height:36px}
+  .main{padding:22px 15px 96px}
+  .hero h1{font-size:26px}
+  .hero h1 em{display:block}
+  .kindGrid{grid-template-columns:1fr}
+  .modalHead,.modalBody{padding-left:16px;padding-right:16px}
+}
+@media(prefers-reduced-motion:reduce){.spinner{animation:none}}
