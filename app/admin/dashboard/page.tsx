@@ -1,3 +1,7 @@
+/**
+ * @module-note app/admin/dashboard/page.tsx
+ * 后台管理／数据总览页面。服务端路由入口负责组装页面或跳转，复杂交互委托给客户端组件。
+ */
 import Link from "next/link";
 import { ArrowRight, Building2, CalendarClock, CheckCircle2, CircleGauge, Clock3, TicketCheck } from "lucide-react";
 import { prisma } from "@/lib/db";
@@ -10,16 +14,28 @@ const statusLabels: Record<string, string> = {
   EXPIRED: "已过期",
 };
 
+/**
+ * 将日期归一到当日零点，用作统计区间边界。
+ * 输入：date；类型与可选项见函数签名。
+ */
 function dayStart(date: Date) {
   const copy = new Date(date);
   copy.setHours(0, 0, 0, 0);
   return copy;
 }
 
+/**
+ * 生成图表使用的日期标签。
+ * 输入：date；类型与可选项见函数签名。
+ */
 function dayLabel(date: Date) {
   return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
+/**
+ * 渲染后台管理／数据总览界面及其子组件。
+ * 数据库操作：prisma.venue.count、prisma.ticketItem.count、prisma.ticketBooking.count、prisma.ticketSlot.findMany、prisma.ticketBooking.groupBy、prisma.ticketBooking.findMany；注意相应的归属过滤与事务边界。
+ */
 export default async function AdminDashboard() {
   const now = new Date();
   const start = dayStart(now);

@@ -1,3 +1,7 @@
+/**
+ * @module-note components/admin/AdminSidebarNav.tsx
+ * 共享界面组件：接收页面数据或处理局部交互，避免每个页面重复实现。
+ */
 "use client";
 
 import Link from "next/link";
@@ -10,6 +14,9 @@ const items = [
   { href: "/admin/bookings", label: "预约核销", description: "现场服务", icon: ClipboardCheck },
 ] as const;
 
+/**
+ * 渲染components／后台管理／AdminSidebarNav.tsx界面及其子组件。
+ */
 export function AdminSidebarNav() {
   const pathname = usePathname();
   return (

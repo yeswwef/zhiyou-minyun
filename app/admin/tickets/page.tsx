@@ -1,3 +1,7 @@
+/**
+ * @module-note app/admin/tickets/page.tsx
+ * 后台管理／票务项目页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ */
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -9,11 +13,19 @@ type TicketItem = { id: string; title: string; summary: string; status: string; 
 const input = "h-11 rounded-lg border border-[#e2d8cc] bg-[#fffdfa] px-3 text-sm outline-none transition focus:border-[#b84434] focus:ring-2 focus:ring-[#b84434]/10";
 const typeLabels: Record<string, string> = { SCENIC: "景区", MUSEUM: "博物馆", PERFORMANCE: "演出场馆" };
 
+/**
+ * 渲染后台管理／票务项目界面及其子组件。
+ * 接口协作：/api/admin/venues、/api/admin/tickets、/api/admin/tickets/${id}/slots、/api/admin/tickets/${item.id}。
+ */
 export default function AdminTicketsPage() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [tickets, setTickets] = useState<TicketItem[]>([]);
   const [message, setMessage] = useState("");
 
+  /**
+   * 重新读取本页展示的数据并更新状态。
+   * 接口协作：/api/admin/venues、/api/admin/tickets。
+   */
   async function load() {
     const [venuePayload, ticketPayload] = await Promise.all([
       fetch("/api/admin/venues").then((response) => response.json()),
@@ -40,6 +52,11 @@ export default function AdminTicketsPage() {
     return result;
   }, { slots: 0, capacity: 0, booked: 0 }), [tickets]);
 
+  /**
+   * 提交场馆创建表单并刷新管理数据。
+   * 接口协作：/api/admin/venues。
+   * 输入：event；类型与可选项见函数签名。
+   */
   async function addVenue(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -49,6 +66,11 @@ export default function AdminTicketsPage() {
     if (response.ok) { form.reset(); await load(); }
   }
 
+  /**
+   * 提交票务项目创建表单。
+   * 接口协作：/api/admin/tickets。
+   * 输入：event；类型与可选项见函数签名。
+   */
   async function addTicket(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -58,6 +80,11 @@ export default function AdminTicketsPage() {
     if (response.ok) { form.reset(); await load(); }
   }
 
+  /**
+   * 为指定票务项目新增预约时段。
+   * 接口协作：/api/admin/tickets/${id}/slots。
+   * 输入：event、id；类型与可选项见函数签名。
+   */
   async function addSlot(event: FormEvent<HTMLFormElement>, id: string) {
     event.preventDefault();
     const form = event.currentTarget;
@@ -67,6 +94,11 @@ export default function AdminTicketsPage() {
     if (response.ok) { form.reset(); await load(); }
   }
 
+  /**
+   * 切换当前条目的操作状态，并根据接口结果更新界面。
+   * 接口协作：/api/admin/tickets/${item.id}。
+   * 输入：item；类型与可选项见函数签名。
+   */
   async function toggle(item: TicketItem) {
     await fetch(`/api/admin/tickets/${item.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: item.status === "OPEN" ? "PAUSED" : "OPEN" }) });
     await load();

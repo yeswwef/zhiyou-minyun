@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/profile/layout.tsx
+ * 游客端／用户中心布局。服务端路由入口负责组装页面或跳转，复杂交互委托给客户端组件。
+ */
 import { ProfileSidebar } from "@/components/ProfileSidebar";
 import { ProfileTopbar } from "@/components/ProfileTopbar";
 

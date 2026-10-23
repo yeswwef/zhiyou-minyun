@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/profile/favorites/page.tsx
+ * 游客端／用户中心／资源收藏页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -8,6 +12,10 @@ import { CommunityPostCard } from "@/features/community/components/CommunityPost
 import type { DestinationResource } from "@/features/destination-resources/types";
 import type { CommunityPostDto } from "@/features/community/types";
 
+/**
+ * 渲染游客端／用户中心／资源收藏界面及其子组件。
+ * 接口协作：/api/favorites。
+ */
 export default function FavoritesPage() {
   const [resources, setResources] = useState<DestinationResource[]>([]);
   const [community, setCommunity] = useState<CommunityPostDto[]>([]);

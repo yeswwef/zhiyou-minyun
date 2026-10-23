@@ -1,3 +1,7 @@
+/**
+ * @module-note app/admin/bookings/page.tsx
+ * 后台管理／票务预约页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ */
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -7,14 +11,27 @@ type Booking = { id: string; bookingNo: string; verifyCode: string; status: stri
 const labels: Record<string, string> = { CONFIRMED: "待核销", VERIFIED: "已核销", CANCELLED: "已取消", EXPIRED: "已过期" };
 const filters = [["ALL", "全部"], ["CONFIRMED", "待核销"], ["VERIFIED", "已核销"], ["CANCELLED", "已取消"]] as const;
 
+/**
+ * 渲染后台管理／票务预约界面及其子组件。
+ * 接口协作：/api/admin/bookings、/api/admin/bookings/verify。
+ */
 export default function AdminBookingsPage() {
   const [items, setItems] = useState<Booking[]>([]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("ALL");
   const [message, setMessage] = useState("");
+  /**
+   * 重新读取本页展示的数据并更新状态。
+   * 接口协作：/api/admin/bookings。
+   */
   async function load() { const payload = await fetch("/api/admin/bookings").then((response) => response.json()); setItems(payload.data ?? []); }
   useEffect(() => { fetch("/api/admin/bookings").then((response) => response.json()).then((payload) => setItems(payload.data ?? [])); }, []);
 
+  /**
+   * 提交用户提供的核销码并显示核销结果。
+   * 接口协作：/api/admin/bookings/verify。
+   * 输入：event；类型与可选项见函数签名。
+   */
   async function verify(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;

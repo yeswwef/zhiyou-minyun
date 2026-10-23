@@ -1,3 +1,7 @@
+/**
+ * @module-note components/admin/AdminDashboardCharts.tsx
+ * 共享界面组件：接收页面数据或处理局部交互，避免每个页面重复实现。
+ */
 "use client";
 
 import {
@@ -19,6 +23,9 @@ type PiePoint = { name: string; value: number };
 
 const PIE_COLORS = ["#b84434", "#d99b53", "#315f58", "#a7aaa3"];
 
+/**
+ * 渲染components／后台管理／AdminDashboardCharts.tsx界面及其子组件。
+ */
 export function AdminDashboardCharts({
   trend,
   statuses,

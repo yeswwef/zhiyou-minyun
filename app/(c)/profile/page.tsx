@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/profile/page.tsx
+ * 游客端／用户中心页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ */
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -39,6 +43,10 @@ const STAT_ITEMS = [
   { key: "followers", label: "粉丝" },
 ] as const;
 
+/**
+ * 渲染游客端／用户中心界面及其子组件。
+ * 接口协作：/api/profile/summary、/api/auth/me、/api/auth/change-password。
+ */
 export default function ProfilePage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [checked, setChecked] = useState(false);
@@ -63,11 +71,19 @@ export default function ProfilePage() {
       .finally(() => setChecked(true));
   }, []);
 
+  /**
+   * 清空个人资料表单的成功与错误提示。
+   */
   function resetFeedback() {
     setMessage("");
     setError("");
   }
 
+  /**
+   * 提交昵称修改并更新当前用户信息。
+   * 接口协作：/api/auth/me。
+   * 输入：event；类型与可选项见函数签名。
+   */
   async function saveNickname(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     resetFeedback();
@@ -90,6 +106,11 @@ export default function ProfilePage() {
     }
   }
 
+  /**
+   * 提交旧密码与新密码以修改登录凭据。
+   * 接口协作：/api/auth/change-password。
+   * 输入：event；类型与可选项见函数签名。
+   */
   async function savePassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     resetFeedback();

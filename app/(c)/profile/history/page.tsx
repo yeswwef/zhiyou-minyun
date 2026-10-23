@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/profile/history/page.tsx
+ * 游客端／用户中心／问答历史页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -12,6 +16,10 @@ type Session = {
 };
 type Message = { role: string; content: string; createdAt: string };
 
+/**
+ * 渲染游客端／用户中心／问答历史界面及其子组件。
+ * 接口协作：/api/chat/sessions、/api/chat/sessions/${id}。
+ */
 export default function HistoryPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +39,11 @@ export default function HistoryPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  /**
+   * 读取选中的历史会话并展示问答记录。
+   * 接口协作：/api/chat/sessions/${id}。
+   * 输入：id；类型与可选项见函数签名。
+   */
   async function openSession(id: string) {
     if (openId === id) {
       setOpenId(null);

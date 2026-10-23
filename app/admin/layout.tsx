@@ -1,3 +1,7 @@
+/**
+ * @module-note app/admin/layout.tsx
+ * 后台管理布局。服务端路由入口负责组装页面或跳转，复杂交互委托给客户端组件。
+ */
 import Link from "next/link";
 import { Bell, LogOut, ShieldCheck } from "lucide-react";
 import { PageTransition } from "@/components/motion/PageTransition";
@@ -6,6 +10,11 @@ import { BrandMark } from "@/components/BrandMark";
 import { getSessionUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 
+/**
+ * 渲染后台管理界面及其子组件。
+ * 接口协作：/api/auth/logout。
+ * 依赖当前会话身份，匿名访问和角色限制由下方分支处理。
+ */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
   if (!user || user.role !== "ADMIN") redirect("/login?endpoint=admin&next=/admin/dashboard");

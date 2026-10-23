@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/profile/footprints/page.tsx
+ * 游客端／用户中心／游览足迹页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,6 +11,10 @@ import type { DestinationResource } from "@/features/destination-resources/types
 
 type Footprint = DestinationResource & { viewedAt: string };
 
+/**
+ * 渲染游客端／用户中心／游览足迹界面及其子组件。
+ * 接口协作：/api/views。
+ */
 export default function FootprintsPage() {
   const [items, setItems] = useState<Footprint[]>([]);
   const [loading, setLoading] = useState(true);

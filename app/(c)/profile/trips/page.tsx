@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/profile/trips/page.tsx
+ * 游客端／用户中心／旅行计划页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ */
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
@@ -20,6 +24,10 @@ type Trip = {
   items: TripItem[];
 };
 
+/**
+ * 渲染游客端／用户中心／旅行计划界面及其子组件。
+ * 接口协作：/api/trips、/api/trips/${id}、/api/trips/${tripId}。
+ */
 export default function TripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +39,10 @@ export default function TripsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
 
+  /**
+   * 重新读取本页展示的数据并更新状态。
+   * 接口协作：/api/trips。
+   */
   function load() {
     fetch("/api/trips")
       .then((response) => response.json())
@@ -44,6 +56,11 @@ export default function TripsPage() {
 
   useEffect(load, []);
 
+  /**
+   * 创建当前用户的旅行计划。
+   * 接口协作：/api/trips。
+   * 输入：event；类型与可选项见函数签名。
+   */
   async function createTrip(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!title.trim()) return;
@@ -64,11 +81,21 @@ export default function TripsPage() {
     }
   }
 
+  /**
+   * 删除指定旅行计划并刷新列表。
+   * 接口协作：/api/trips/${id}。
+   * 输入：id；类型与可选项见函数签名。
+   */
   async function removeTrip(id: string) {
     const response = await fetch(`/api/trips/${id}`, { method: "DELETE" });
     if (response.ok) load();
   }
 
+  /**
+   * 保存指定行程的新标题。
+   * 接口协作：/api/trips/${id}。
+   * 输入：id；类型与可选项见函数签名。
+   */
   async function saveTitle(id: string) {
     if (!editingTitle.trim()) return;
     const response = await fetch(`/api/trips/${id}`, {
@@ -82,6 +109,11 @@ export default function TripsPage() {
     }
   }
 
+  /**
+   * 从指定行程移除一项资源。
+   * 接口协作：/api/trips/${tripId}。
+   * 输入：tripId、resourceId；类型与可选项见函数签名。
+   */
   async function removeItem(tripId: string, resourceId: string) {
     const trip = trips.find((item) => item.id === tripId);
     if (!trip) return;
