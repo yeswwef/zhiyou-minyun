@@ -1,8 +1,15 @@
+/**
+ * @module-note features/community/components/CommunityPostCard.tsx
+ * 社区业务：围绕帖子、图片、评价与关注关系组织数据及交互。
+ */
 import Link from "next/link";
 import { Heart, MapPin, MessageCircle, Star } from "lucide-react";
 import type { CommunityPostDto } from "../types";
 import { formatCommunityDate, postTypeLabel } from "../types";
 
+/**
+ * 渲染features／社区／components／CommunityPostCard.tsx界面及其子组件。
+ */
 export function CommunityPostCard({ post }: { post: CommunityPostDto }) {
   const cover = post.images[0]?.imageUrl || post.resource.image || "/images/sanfangqixiang.jpg";
   const author = post.author.nickname || post.author.username;

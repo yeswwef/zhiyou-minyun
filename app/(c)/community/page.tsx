@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/community/page.tsx
+ * 游客端／社区页面。服务端路由入口负责组装页面或跳转，复杂交互委托给客户端组件。
+ */
 import Link from "next/link";
 import { ChevronRight, MapPin, PenLine, Sparkles } from "lucide-react";
 import type { Prisma } from "@/generated/prisma/client";
@@ -23,6 +27,11 @@ const HOT_TOPICS = [
   { label: "寿山石雕匠心", resourceId: "moyan", category: "非遗" },
 ] as const;
 
+/**
+ * 渲染游客端／社区界面及其子组件。
+ * 数据库操作：prisma.resource.findFirst、prisma.user.findUnique、prisma.communityPost.findMany、prisma.communityPost.count；注意相应的归属过滤与事务边界。
+ * 依赖当前会话身份，匿名访问和角色限制由下方分支处理。
+ */
 export default async function CommunityPage({
   searchParams,
 }: {
@@ -82,6 +91,10 @@ export default async function CommunityPage({
     prisma.communityPost.count({ where }),
   ]);
   const totalPages = Math.max(Math.ceil(total / pageSize), 1);
+  /**
+   * 根据操作目标构造跳转地址。
+   * 输入：type；类型与可选项见函数签名。
+   */
   const actionHref = (type: "checkin" | "review") =>
     user ? `/community/new?type=${type}` : `/login?next=${encodeURIComponent(`/community/new?type=${type}`)}`;
 

@@ -1,3 +1,7 @@
+/**
+ * @module-note features/community/components/CommunityPostForm.tsx
+ * 社区业务：围绕帖子、图片、评价与关注关系组织数据及交互。
+ */
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
@@ -14,6 +18,10 @@ type ImageItem =
   | { id: string; kind: "existing"; url: string }
   | { id: string; kind: "new"; url: string; file: File };
 
+/**
+ * 渲染features／社区／components／CommunityPostForm.tsx界面及其子组件。
+ * 接口协作：/api/community/posts?mine=true&type=REVIEW&resourceId=${encodeURIComponent(reviewLookupResourceId)}&pageSize=1、/api/community/posts/${initialPost.id}、/api/community/posts。
+ */
 export function CommunityPostForm({
   resources,
   initialType,
@@ -74,6 +82,10 @@ export function CommunityPostForm({
     return () => controller.abort();
   }, [reviewLookupResourceId]);
 
+  /**
+   * 将选择的图片加入待上传列表并进行数量或类型检查。
+   * 输入：files；类型与可选项见函数签名。
+   */
   function addFiles(files: FileList | null) {
     if (!files) return;
     const candidates = Array.from(files);
@@ -100,6 +112,10 @@ export function CommunityPostForm({
     ]);
   }
 
+  /**
+   * 从编辑列表移除指定图片。
+   * 输入：index；类型与可选项见函数签名。
+   */
   function removeImage(index: number) {
     setImages((current) => {
       const target = current[index];
@@ -108,6 +124,10 @@ export function CommunityPostForm({
     });
   }
 
+  /**
+   * 调整图片在编辑列表中的顺序。
+   * 输入：index、direction；类型与可选项见函数签名。
+   */
   function moveImage(index: number, direction: -1 | 1) {
     const nextIndex = index + direction;
     if (nextIndex < 0 || nextIndex >= images.length) return;
@@ -118,6 +138,11 @@ export function CommunityPostForm({
     });
   }
 
+  /**
+   * 提交本页表单数据，处理服务端成功或失败结果。
+   * 接口协作：/api/community/posts/${initialPost.id}、/api/community/posts。
+   * 输入：event；类型与可选项见函数签名。
+   */
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);

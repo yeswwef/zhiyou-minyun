@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/community/new/page.tsx
+ * 游客端／社区／新建页面。服务端路由入口负责组装页面或跳转，复杂交互委托给客户端组件。
+ */
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -5,6 +9,11 @@ import { getSessionUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { CommunityPostForm } from "@/features/community/components/CommunityPostForm";
 
+/**
+ * 渲染游客端／社区／新建界面及其子组件。
+ * 数据库操作：prisma.resource.findMany；注意相应的归属过滤与事务边界。
+ * 依赖当前会话身份，匿名访问和角色限制由下方分支处理。
+ */
 export default async function NewCommunityPostPage({
   searchParams,
 }: {

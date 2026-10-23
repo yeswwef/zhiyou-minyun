@@ -1,6 +1,10 @@
+/**
+ * @module-note app/api/community/posts/[id]/route.ts
+ * 社区／帖子／指定id接口。HTTP请求进入具名方法后执行校验与业务处理，再以响应返回；权限、错误码和数据范围以各分支为准。
+ */
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { getSessionUserId } from "@/lib/auth";
+import { guardVisitor } from "@/lib/roles";
 import { prisma } from "@/lib/db";
 import {
   COMMUNITY_MAX_IMAGES,
@@ -20,6 +24,10 @@ type ImageOrderItem =
   | { kind: "existing"; value: string }
   | { kind: "new"; index: number };
 
+/**
+ * 解析表单中的图片排序信息，区分已有图片与新增文件。
+ * 输入：formData；类型与可选项见函数签名。
+ */
 function parseImageOrder(formData: FormData): ImageOrderItem[] | null {
   const raw = formData.get("imageOrder");
   if (typeof raw !== "string" || !raw) return null;
@@ -39,6 +47,10 @@ function parseImageOrder(formData: FormData): ImageOrderItem[] | null {
   }
 }
 
+/**
+ * 读取社区／帖子／指定id数据，处理对应 GET 请求。
+ * 数据库操作：prisma.communityPost.findFirst；注意相应的归属过滤与事务边界。
+ */
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -54,14 +66,18 @@ export async function GET(
   return NextResponse.json({ ok: true, data: toCommunityPostDto(post) });
 }
 
+/**
+ * 局部更新社区／帖子／指定id数据，处理对应 PATCH 请求。
+ * 数据库操作：prisma.communityPost.findUnique、prisma.resource.findFirst、prisma.communityPost.findFirst、prisma.$transaction、tx.communityPost.update；注意相应的归属过滤与事务边界。
+ * 访问前执行游客角色检查，失败直接返回拒绝响应。
+ */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
-  }
+  const guard = await guardVisitor();
+  if (!guard.ok) return guard.response;
+  const userId = guard.userId;
   const { id } = await params;
   const current = await prisma.communityPost.findUnique({
     where: { id },
@@ -165,14 +181,18 @@ export async function PATCH(
   }
 }
 
+/**
+ * 删除或取消社区／帖子／指定id数据，处理对应 DELETE 请求。
+ * 数据库操作：prisma.communityPost.findUnique、prisma.$transaction、tx.communityPost.delete；注意相应的归属过滤与事务边界。
+ * 访问前执行游客角色检查，失败直接返回拒绝响应。
+ */
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
-  }
+  const guard = await guardVisitor();
+  if (!guard.ok) return guard.response;
+  const userId = guard.userId;
   const { id } = await params;
   const current = await prisma.communityPost.findUnique({
     where: { id },

@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/community/users/[id]/page.tsx
+ * 游客端／社区／用户／指定id页面。服务端路由入口负责组装页面或跳转，复杂交互委托给客户端组件。
+ */
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Heart, MapPin, PenLine, UserCheck, UsersRound } from "lucide-react";
@@ -13,6 +17,11 @@ const TABS = [
   { key: "REVIEW", label: "评价" },
 ] as const;
 
+/**
+ * 渲染游客端／社区／用户／指定id界面及其子组件。
+ * 数据库操作：prisma.user.findUnique、prisma.communityPost.findMany、prisma.userFollow.count、prisma.communityPostLike.count、prisma.userFollow.findUnique、prisma.communityPost.count；注意相应的归属过滤与事务边界。
+ * 依赖当前会话身份，匿名访问和角色限制由下方分支处理。
+ */
 export default async function CommunityUserPage({
   params,
   searchParams,

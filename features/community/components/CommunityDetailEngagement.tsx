@@ -1,3 +1,7 @@
+/**
+ * @module-note features/community/components/CommunityDetailEngagement.tsx
+ * 社区业务：围绕帖子、图片、评价与关注关系组织数据及交互。
+ */
 "use client";
 
 import { useRef, useState, type FormEvent, type ReactNode } from "react";
@@ -12,6 +16,10 @@ type Author = {
   nickname: string | null;
 };
 
+/**
+ * 渲染features／社区／components／CommunityDetailEngagement.tsx界面及其子组件。
+ * 接口协作：/api/community/posts/${postId}/${kind}、/api/community/follows、/api/community/posts/${postId}/comments、/api/community/comments/${commentId}。
+ */
 export function CommunityDetailEngagement({
   postId,
   author,
@@ -49,12 +57,20 @@ export function CommunityDetailEngagement({
   const authorName = author.nickname || author.username;
   const isOwner = viewerId === author.id;
 
+  /**
+   * 检查登录状态，必要时提示用户登录后再操作。
+   */
   function requireLogin() {
     if (viewerId) return true;
     router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`);
     return false;
   }
 
+  /**
+   * 切换当前条目的操作状态，并根据接口结果更新界面。
+   * 接口协作：/api/community/posts/${postId}/${kind}。
+   * 输入：kind；类型与可选项见函数签名。
+   */
   async function toggle(kind: "like" | "favorite") {
     if (!requireLogin() || busy) return;
     setBusy(kind);
@@ -75,6 +91,10 @@ export function CommunityDetailEngagement({
     }
   }
 
+  /**
+   * 提交关注或取消关注并同步按钮状态。
+   * 接口协作：/api/community/follows。
+   */
   async function toggleFollow() {
     if (!requireLogin() || busy || isOwner) return;
     setBusy("follow");
@@ -94,6 +114,11 @@ export function CommunityDetailEngagement({
     setFollowerCount(payload.count ?? followerCount);
   }
 
+  /**
+   * 校验并发布评论，成功后更新评论区。
+   * 接口协作：/api/community/posts/${postId}/comments。
+   * 输入：event；类型与可选项见函数签名。
+   */
   async function publishComment(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!requireLogin() || busy || !content.trim()) return;
@@ -115,6 +140,11 @@ export function CommunityDetailEngagement({
     setContent("");
   }
 
+  /**
+   * 删除指定评论并更新展示。
+   * 接口协作：/api/community/comments/${commentId}。
+   * 输入：commentId；类型与可选项见函数签名。
+   */
   async function deleteComment(commentId: string) {
     if (busy) return;
     setBusy(commentId);

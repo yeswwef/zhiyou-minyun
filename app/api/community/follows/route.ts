@@ -1,6 +1,11 @@
+/**
+ * @module-note app/api/community/follows/route.ts
+ * 社区／关注关系接口。HTTP请求进入具名方法后执行校验与业务处理，再以响应返回；权限、错误码和数据范围以各分支为准。
+ */
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionUserId } from "@/lib/auth";
+import { guardVisitor } from "@/lib/roles";
 import { prisma } from "@/lib/db";
 
 const userSelect = {
@@ -10,6 +15,11 @@ const userSelect = {
   _count: { select: { followers: true, communityPosts: true } },
 } as const;
 
+/**
+ * 读取社区／关注关系数据，处理对应 GET 请求。
+ * 数据库操作：prisma.userFollow.findMany；注意相应的归属过滤与事务边界。
+ * 依赖当前会话身份，匿名访问和角色限制由下方分支处理。
+ */
 export async function GET(request: NextRequest) {
   const userId = await getSessionUserId();
   if (!userId) {
@@ -50,11 +60,15 @@ export async function GET(request: NextRequest) {
   });
 }
 
+/**
+ * 提交或创建社区／关注关系数据，处理对应 POST 请求。
+ * 数据库操作：prisma.user.findUnique、prisma.$transaction、tx.userFollow.findUnique、tx.userFollow.delete、tx.userFollow.create、tx.userFollow.count；注意相应的归属过滤与事务边界。
+ * 访问前执行游客角色检查，失败直接返回拒绝响应。
+ */
 export async function POST(request: NextRequest) {
-  const followerId = await getSessionUserId();
-  if (!followerId) {
-    return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
-  }
+  const guard = await guardVisitor();
+  if (!guard.ok) return guard.response;
+  const followerId = guard.userId;
   const body = await request.json().catch(() => null);
   const followingId = String(body?.followingId ?? "");
   if (!followingId || followingId === followerId) {

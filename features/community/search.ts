@@ -1,3 +1,7 @@
+/**
+ * @module-note features/community/search.ts
+ * 社区业务：围绕帖子、图片、评价与关注关系组织数据及交互。
+ */
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 

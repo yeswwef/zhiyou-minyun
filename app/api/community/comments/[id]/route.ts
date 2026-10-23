@@ -1,16 +1,24 @@
+/**
+ * @module-note app/api/community/comments/[id]/route.ts
+ * 社区／评论／指定id接口。HTTP请求进入具名方法后执行校验与业务处理，再以响应返回；权限、错误码和数据范围以各分支为准。
+ */
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
-import { getSessionUserId } from "@/lib/auth";
+import { guardVisitor } from "@/lib/roles";
 import { prisma } from "@/lib/db";
 
+/**
+ * 删除或取消社区／评论／指定id数据，处理对应 DELETE 请求。
+ * 数据库操作：prisma.communityComment.findUnique、prisma.communityComment.delete、prisma.communityComment.count；注意相应的归属过滤与事务边界。
+ * 访问前执行游客角色检查，失败直接返回拒绝响应。
+ */
 export async function DELETE(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
-  }
+  const guard = await guardVisitor();
+  if (!guard.ok) return guard.response;
+  const userId = guard.userId;
   const { id } = await params;
   const comment = await prisma.communityComment.findUnique({
     where: { id },

@@ -1,3 +1,7 @@
+/**
+ * @module-note features/community/validation.ts
+ * 社区业务：围绕帖子、图片、评价与关注关系组织数据及交互。
+ */
 import type { CommunityPostTypeValue } from "./types";
 
 export type CommunityPostInput = {
@@ -11,11 +15,19 @@ export type CommunityPostInput = {
 
 export class CommunityValidationError extends Error {}
 
+/**
+ * 从 FormData 读取字符串并去除两端空白。
+ * 输入：formData、key；类型与可选项见函数签名。
+ */
 function text(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
 }
 
+/**
+ * 校验帖子类型、资源、标题、正文、评分和日期；无效输入抛出业务校验异常。
+ * 输入：formData；类型与可选项见函数签名。
+ */
 export function parseCommunityPostForm(formData: FormData): CommunityPostInput {
   const type = text(formData, "type");
   if (type !== "CHECKIN" && type !== "REVIEW") {
@@ -53,6 +65,10 @@ export function parseCommunityPostForm(formData: FormData): CommunityPostInput {
   return { type, resourceId, title, content, rating, visitedAt };
 }
 
+/**
+ * 从表单提取非空 File 对象，排除普通字符串字段。
+ * 输入：formData；类型与可选项见函数签名。
+ */
 export function getImageFiles(formData: FormData) {
   return formData
     .getAll("images")

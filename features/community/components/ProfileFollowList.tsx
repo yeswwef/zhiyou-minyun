@@ -1,3 +1,7 @@
+/**
+ * @module-note features/community/components/ProfileFollowList.tsx
+ * 社区业务：围绕帖子、图片、评价与关注关系组织数据及交互。
+ */
 "use client";
 
 import { useEffect, useState } from "react";
@@ -13,6 +17,10 @@ type FollowUser = {
   _count: { followers: number; communityPosts: number };
 };
 
+/**
+ * 渲染features／社区／components／ProfileFollowList.tsx界面及其子组件。
+ * 接口协作：/api/community/follows?mode=${mode}、/api/community/follows。
+ */
 export function ProfileFollowList({ mode }: { mode: "following" | "followers" }) {
   const [users, setUsers] = useState<FollowUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +39,11 @@ export function ProfileFollowList({ mode }: { mode: "following" | "followers" })
       .finally(() => setLoading(false));
   }, [mode]);
 
+  /**
+   * 提交关注或取消关注并同步按钮状态。
+   * 接口协作：/api/community/follows。
+   * 输入：user；类型与可选项见函数签名。
+   */
   async function toggleFollow(user: FollowUser) {
     setBusyId(user.id);
     setError("");

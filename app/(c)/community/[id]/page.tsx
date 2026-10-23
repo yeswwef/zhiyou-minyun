@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/community/[id]/page.tsx
+ * 游客端／社区／指定id页面。服务端路由入口负责组装页面或跳转，复杂交互委托给客户端组件。
+ */
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, MapPin, Star } from "lucide-react";
@@ -9,6 +13,11 @@ import { CommunityPostCard } from "@/features/community/components/CommunityPost
 import { CommunityDetailEngagement } from "@/features/community/components/CommunityDetailEngagement";
 import { formatCommunityDate, postTypeLabel, resourceTypeLabel } from "@/features/community/types";
 
+/**
+ * 渲染游客端／社区／指定id界面及其子组件。
+ * 数据库操作：prisma.communityPost.findFirst、prisma.communityComment.findMany、prisma.communityPost.findMany、prisma.communityPostLike.findUnique、prisma.communityPostFavorite.findUnique、prisma.userFollow.findUnique；注意相应的归属过滤与事务边界。
+ * 依赖当前会话身份，匿名访问和角色限制由下方分支处理。
+ */
 export default async function CommunityPostDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const [record, user] = await Promise.all([

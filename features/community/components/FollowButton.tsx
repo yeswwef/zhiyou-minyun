@@ -1,9 +1,17 @@
+/**
+ * @module-note features/community/components/FollowButton.tsx
+ * 社区业务：围绕帖子、图片、评价与关注关系组织数据及交互。
+ */
 "use client";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { UserPlus } from "lucide-react";
 
+/**
+ * 渲染features／社区／components／FollowButton.tsx界面及其子组件。
+ * 接口协作：/api/community/follows。
+ */
 export function FollowButton({
   userId,
   viewerId,
@@ -17,6 +25,10 @@ export function FollowButton({
   const [following, setFollowing] = useState(initialFollowing);
   const [busy, setBusy] = useState(false);
 
+  /**
+   * 切换当前条目的操作状态，并根据接口结果更新界面。
+   * 接口协作：/api/community/follows。
+   */
   async function toggle() {
     if (!viewerId) {
       router.push(`/login?next=${encodeURIComponent(window.location.pathname)}`);

@@ -1,7 +1,10 @@
+/**
+ * @module-note features/community/components/CommunityShell.tsx
+ * 社区业务：围绕帖子、图片、评价与关注关系组织数据及交互。
+ */
 import Link from "next/link";
 import {
   Bell,
-  Bot,
   ChevronDown,
   GraduationCap,
   Map,
@@ -24,17 +27,19 @@ const COMMUNITY_MENU = [
   { href: "/home", label: "首页", icon: MapPin },
   { href: "/profile", label: "用户中心", icon: UserRound },
   { href: "/home#ask", label: "AI文化问答", icon: MessageCircle },
-  { href: "/home#plan", label: "旅游行程规划", icon: Route },
+  { href: "/plan", label: "旅游行程规划", icon: Route },
   { href: "/resources", label: "文旅资源中心", icon: Map },
-  { href: "/home#recognition", label: "AI多模态识景", icon: ScanLine },
-  { href: "/home#digital-guide", label: "AI数字人讲解", icon: Bot },
+  { href: "/recognition", label: "AI多模态识景", icon: ScanLine },
   { href: "/home#tickets", label: "票务预约", icon: Ticket },
-  { href: "/home#help", label: "便民与应急", icon: ShieldCheck },
+  { href: "/help", label: "便民与应急", icon: ShieldCheck },
   { href: "/home#shop", label: "文旅商品购买", icon: ShoppingBag },
   { href: "/community", label: "文旅社区", icon: UsersRound, active: true },
   { href: "/home#learn", label: "非遗学习", icon: GraduationCap },
 ];
 
+/**
+ * 渲染features／社区／components／CommunityShell.tsx界面及其子组件。
+ */
 export function CommunityShell({
   children,
   user,

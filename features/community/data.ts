@@ -1,3 +1,7 @@
+/**
+ * @module-note features/community/data.ts
+ * 社区业务：围绕帖子、图片、评价与关注关系组织数据及交互。
+ */
 import type { Prisma } from "@/generated/prisma/client";
 import type { CommunityPostDto } from "./types";
 
@@ -28,6 +32,10 @@ export type CommunityPostRecord = Prisma.CommunityPostGetPayload<{
   include: typeof communityPostInclude;
 }>;
 
+/**
+ * 把帖子及关联作者、资源、图片信息转换为社区展示 DTO。
+ * 输入：post；类型与可选项见函数签名。
+ */
 export function toCommunityPostDto(post: CommunityPostRecord): CommunityPostDto {
   return {
     id: post.id,

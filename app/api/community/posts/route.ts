@@ -1,7 +1,12 @@
+/**
+ * @module-note app/api/community/posts/route.ts
+ * 社区／帖子接口。HTTP请求进入具名方法后执行校验与业务处理，再以响应返回；权限、错误码和数据范围以各分支为准。
+ */
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import type { Prisma } from "@/generated/prisma/client";
 import { getSessionUserId } from "@/lib/auth";
+import { guardVisitor } from "@/lib/roles";
 import { prisma } from "@/lib/db";
 import {
   CommunityImageError,
@@ -20,6 +25,11 @@ import { buildCommunitySearchWhere } from "@/features/community/search";
 const RESOURCE_TYPES = new Set(["SCENIC", "ICH", "FOOD"]);
 const POST_TYPES = new Set(["CHECKIN", "REVIEW"]);
 
+/**
+ * 读取社区／帖子数据，处理对应 GET 请求。
+ * 数据库操作：prisma.communityPost.findMany、prisma.communityPost.count；注意相应的归属过滤与事务边界。
+ * 依赖当前会话身份，匿名访问和角色限制由下方分支处理。
+ */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const page = Math.max(Number(params.get("page") ?? 1) || 1, 1);
@@ -78,11 +88,15 @@ export async function GET(request: NextRequest) {
   });
 }
 
+/**
+ * 提交或创建社区／帖子数据，处理对应 POST 请求。
+ * 数据库操作：prisma.resource.findFirst、prisma.communityPost.findFirst、prisma.$transaction、tx.communityPost.create；注意相应的归属过滤与事务边界。
+ * 访问前执行游客角色检查，失败直接返回拒绝响应。
+ */
 export async function POST(request: NextRequest) {
-  const userId = await getSessionUserId();
-  if (!userId) {
-    return NextResponse.json({ ok: false, error: "请先登录" }, { status: 401 });
-  }
+  const guard = await guardVisitor();
+  if (!guard.ok) return guard.response;
+  const userId = guard.userId;
 
   let savedImages: string[] = [];
   try {

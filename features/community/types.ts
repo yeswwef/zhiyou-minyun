@@ -1,3 +1,7 @@
+/**
+ * @module-note features/community/types.ts
+ * 社区业务：围绕帖子、图片、评价与关注关系组织数据及交互。
+ */
 export type CommunityPostTypeValue = "CHECKIN" | "REVIEW";
 export type CommunityResourceType = "SCENIC" | "ICH" | "FOOD";
 
@@ -54,14 +58,26 @@ export type CommunityCommentDto = {
   };
 };
 
+/**
+ * 将资源类型枚举转换为中文标签。
+ * 输入：type；类型与可选项见函数签名。
+ */
 export function resourceTypeLabel(type: CommunityResourceType) {
   return type === "SCENIC" ? "景点" : type === "ICH" ? "非遗" : "美食";
 }
 
+/**
+ * 将打卡或评价类型转换为展示标签。
+ * 输入：type；类型与可选项见函数签名。
+ */
 export function postTypeLabel(type: CommunityPostTypeValue) {
   return type === "CHECKIN" ? "打卡" : "评价";
 }
 
+/**
+ * 将日期转换为社区列表展示格式。
+ * 输入：value；类型与可选项见函数签名。
+ */
 export function formatCommunityDate(value: string | Date) {
   const date = typeof value === "string" ? new Date(value) : value;
   const delta = Date.now() - date.getTime();
