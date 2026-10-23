@@ -1,7 +1,15 @@
+/**
+ * @module-note prisma/seed-tickets.ts
+ * 数据库初始化脚本：用于开发演示数据，运行会写入数据库，不能当作只读检查。
+ */
 import "dotenv/config";
 import { prisma } from "../lib/db";
 import { hashPassword } from "../lib/auth";
 
+/**
+ * 计算指定日期偏移和时间的种子时段。
+ * 输入：days、hour；类型与可选项见函数签名。
+ */
 const dayAt = (days: number, hour: number) => {
   const value = new Date();
   value.setDate(value.getDate() + days);
@@ -9,6 +17,10 @@ const dayAt = (days: number, hour: number) => {
   return value;
 };
 
+/**
+ * 执行 seed-tickets.ts 的命令行主流程，初始化依赖并处理最终结果。
+ * 数据库操作：prisma.user.upsert、prisma.venue.findFirst、prisma.venue.create、prisma.ticketItem.findFirst、prisma.ticketItem.create、prisma.ticketSlot.count；注意相应的归属过滤与事务边界。
+ */
 async function main() {
   const admin = await prisma.user.upsert({
     where: { username: "demo_admin" },
