@@ -1,3 +1,7 @@
+/**
+ * @module-note features/destination-resources/components/AddToTripButton.tsx
+ * 文旅资源展示与交互：资源卡片连接收藏、行程及详情入口。
+ */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -11,6 +15,10 @@ type Trip = {
   items: Array<{ resourceId: string; title: string }>;
 };
 
+/**
+ * 渲染features／destination-resources／components／AddToTripButton.tsx界面及其子组件。
+ * 接口协作：/api/trips、/api/trips/${tripId}。
+ */
 export function AddToTripButton({
   resourceId,
   title,
@@ -38,6 +46,10 @@ export function AddToTripButton({
   }, [open]);
 
   useEffect(() => {
+    /**
+     * 点击选择面板之外时关闭面板。
+     * 输入：event；类型与可选项见函数签名。
+     */
     function onClickOutside(event: MouseEvent) {
       if (wrapRef.current && !wrapRef.current.contains(event.target as Node)) {
         setOpen(false);
@@ -47,6 +59,11 @@ export function AddToTripButton({
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
+  /**
+   * 把当前资源加入指定行程。
+   * 接口协作：/api/trips/${tripId}。
+   * 输入：tripId；类型与可选项见函数签名。
+   */
   async function addToTrip(tripId: string) {
     const trip = trips.find((item) => item.id === tripId);
     if (!trip) return;
@@ -65,9 +82,16 @@ export function AddToTripButton({
     if (response.ok) {
       setMessage("已加入行程");
       setOpen(false);
+      return;
     }
+    const payload = (await response.json()) as { error?: string };
+    setMessage(payload.error ?? "加入失败");
   }
 
+  /**
+   * 先创建行程，再将当前资源加入其中。
+   * 接口协作：/api/trips。
+   */
   async function createAndAdd() {
     setBusy(true);
     const response = await fetch("/api/trips", {
@@ -83,7 +107,10 @@ export function AddToTripButton({
     if (response.ok) {
       setMessage("已新建行程并加入");
       setOpen(false);
+      return;
     }
+    const payload = (await response.json()) as { error?: string };
+    setMessage(payload.error ?? "新建失败");
   }
 
   return (

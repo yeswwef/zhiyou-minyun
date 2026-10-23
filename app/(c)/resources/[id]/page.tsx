@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/resources/[id]/page.tsx
+ * 游客端／文旅资源／指定id页面。服务端路由入口负责组装页面或跳转，复杂交互委托给客户端组件。
+ */
 import { ArrowLeft, Clock3, MapPin, Star } from "lucide-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -7,6 +11,10 @@ import { FavoriteButton } from "@/features/destination-resources/components/Favo
 import { AddToTripButton } from "@/features/destination-resources/components/AddToTripButton";
 import { ViewTracker } from "@/components/ViewTracker";
 
+/**
+ * 渲染游客端／文旅资源／指定id界面及其子组件。
+ * 数据库操作：prisma.resource.findUnique、prisma.resource.findMany；注意相应的归属过滤与事务边界。
+ */
 export default async function ResourceDetailPage({
   params,
 }: {
@@ -52,7 +60,7 @@ export default async function ResourceDetailPage({
 
         <nav>
           <Link className="active" href="/resources">发现</Link>
-          <a href="/home#plan">行程</a>
+          <a href="/plan">行程</a>
           <a href="/home#stories">游记</a>
           <a href="/profile/favorites">我的收藏</a>
         </nav>

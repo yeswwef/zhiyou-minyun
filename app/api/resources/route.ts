@@ -1,3 +1,7 @@
+/**
+ * @module-note app/api/resources/route.ts
+ * 文旅资源接口。HTTP请求进入具名方法后执行校验与业务处理，再以响应返回；权限、错误码和数据范围以各分支为准。
+ */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 
@@ -7,6 +11,10 @@ const typeMap = {
   美食: "FOOD",
 } as const;
 
+/**
+ * 将资源数据库记录整理为前端返回结构。
+ * 输入：resource；类型与可选项见函数签名。
+ */
 function toResource(resource: {
   slug: string;
   title: string;
@@ -36,6 +44,10 @@ function toResource(resource: {
   };
 }
 
+/**
+ * 读取文旅资源数据，处理对应 GET 请求。
+ * 数据库操作：prisma.resource.findMany、prisma.tag.findMany、prisma.resource.count；注意相应的归属过滤与事务边界。
+ */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const keyword = params.get("q")?.trim();

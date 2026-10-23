@@ -1,3 +1,7 @@
+/**
+ * @module-note app/(c)/resources/page.tsx
+ * 游客端／文旅资源页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ */
 "use client";
 
 import { ChevronLeft, ChevronRight, Search, SlidersHorizontal, X } from "lucide-react";
@@ -14,6 +18,10 @@ const categories: Array<"全部" | ResourceCategory> = [
   "美食",
 ];
 
+/**
+ * 渲染游客端／文旅资源界面及其子组件。
+ * 接口协作：/api/resources?${query.toString()}。
+ */
 export default function ResourcesPage() {
   const [keyword, setKeyword] = useState("");
   const [category, setCategory] = useState<(typeof categories)[number]>(
@@ -69,7 +77,7 @@ export default function ResourcesPage() {
           <Link className="active" href="/resources">
             发现
           </Link>
-          <a href="/home#plan">行程</a>
+          <a href="/plan">行程</a>
           <a href="/home#stories">游记</a>
           <a href="/profile/favorites">我的收藏</a>
         </nav>
