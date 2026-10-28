@@ -1,15 +1,26 @@
 /**
  * @module-note app/(c)/learn/page.tsx
- * 游客端／非遗学习页面。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ * 游客端／非遗学习页面：作品线上展厅 + 线下体验课报名，按「逛展 → 报名」组织内容。
  */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarDays, GraduationCap, MapPin, Users } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  Check,
+  GraduationCap,
+  MapPin,
+  Palette,
+  Search,
+  Users,
+  X,
+} from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import { formatPrice } from "@/features/merchant/types";
+import styles from "@/features/commerce/commerce.module.css";
 
 type Work = {
   id: string;
@@ -33,9 +44,55 @@ type ClassItem = {
   merchant: { id: string; nickname: string | null; username: string; merchantName: string | null };
 };
 
+type Tab = "ALL" | "WORKS" | "CLASSES";
+
+function merchantName(merchant: Work["merchant"]) {
+  return merchant.merchantName || merchant.nickname || merchant.username;
+}
+
+function matchesWork(work: Work, keyword: string) {
+  const text = keyword.trim().toLowerCase();
+  if (!text) return true;
+  return `${work.title} ${work.description} ${merchantName(work.merchant)}`
+    .toLowerCase()
+    .includes(text);
+}
+
+function matchesClass(item: ClassItem, keyword: string) {
+  const text = keyword.trim().toLowerCase();
+  if (!text) return true;
+  return `${item.title} ${item.summary} ${item.location ?? ""} ${item.schedule}`
+    .toLowerCase()
+    .includes(text);
+}
+
+function WorkCard({ work, onOpen }: { work: Work; onOpen: (work: Work) => void }) {
+  return (
+    <button
+      className={`${styles.card} ${styles.ichCard} ${styles.workButton}`}
+      onClick={() => onOpen(work)}
+    >
+      <div
+        className={styles.ichImage}
+        style={{
+          backgroundImage: `url('${work.image || "/images/resources/shangxiahang.jpg"}')`,
+        }}
+      />
+      <div className={styles.ichBody}>
+        <span className={styles.eyebrow}>非遗作品 · {merchantName(work.merchant)}</span>
+        <h4>{work.title}</h4>
+        <p>{work.description}</p>
+        <span className={styles.cardLink}>
+          查看作品 <ArrowRight size={13} />
+        </span>
+      </div>
+    </button>
+  );
+}
+
 /**
- * 渲染游客端／非遗学习界面及其子组件。
- * 接口协作：/api/classes、/api/works、/api/classes/${item.id}/enroll。
+ * 渲染游客端非遗学习页。
+ * 接口协作：/api/works、/api/classes、/api/classes/{id}/enroll。
  */
 export default function LearnPage() {
   const router = useRouter();
@@ -43,11 +100,10 @@ export default function LearnPage() {
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [keyword, setKeyword] = useState("");
+  const [tab, setTab] = useState<Tab>("ALL");
+  const [selectedWork, setSelectedWork] = useState<Work | null>(null);
 
-  /**
-   * 加载体验课程并更新页面列表。
-   * 接口协作：/api/classes。
-   */
   function loadClasses() {
     fetch("/api/classes")
       .then((r) => r.json())
@@ -73,11 +129,15 @@ export default function LearnPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  /**
-   * 为当前用户提交课程报名并更新显示状态。
-   * 接口协作：/api/classes/${item.id}/enroll。
-   * 输入：item；类型与可选项见函数签名。
-   */
+  useEffect(() => {
+    if (!selectedWork) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setSelectedWork(null);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [selectedWork]);
+
   async function enroll(item: ClassItem) {
     setError("");
     const response = await fetch(`/api/classes/${item.id}/enroll`, {
@@ -97,19 +157,36 @@ export default function LearnPage() {
     loadClasses();
   }
 
-  /**
-   * 提交取消操作并更新当前页面状态。
-   * 接口协作：/api/classes/${item.id}/enroll。
-   * 输入：item；类型与可选项见函数签名。
-   */
   async function cancel(item: ClassItem) {
     setError("");
     const response = await fetch(`/api/classes/${item.id}/enroll`, { method: "DELETE" });
     if (response.ok) loadClasses();
   }
 
+  const filteredWorks = useMemo(
+    () => works.filter((work) => matchesWork(work, keyword)),
+    [works, keyword],
+  );
+  const filteredClasses = useMemo(
+    () => classes.filter((item) => matchesClass(item, keyword)),
+    [classes, keyword],
+  );
+  const showWorks = tab !== "CLASSES";
+  const showClasses = tab !== "WORKS";
+  const totalSeats = classes.reduce((sum, item) => sum + item.capacity, 0);
+  const lowestPrice = classes.length
+    ? Math.min(...classes.map((item) => item.price))
+    : 0;
+
+  function openTab(next: Tab, anchor: string) {
+    setTab(next);
+    window.setTimeout(() => {
+      document.getElementById(anchor)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 60);
+  }
+
   return (
-    <main className="resource-page">
+    <main className={`resource-page ${styles.page}`}>
       <header className="resource-site-nav">
         <Link href="/home" className="resource-brand">
           <span><BrandMark size={19} /></span>
@@ -124,137 +201,301 @@ export default function LearnPage() {
         <Link href="/home" className="resource-user">返回首页</Link>
       </header>
 
-      <header className="resource-header">
-        <div>
-          <p className="section-kicker">INTANGIBLE HERITAGE</p>
-          <h1>非遗学习</h1>
-          <p>逛非遗传承人的线上作品展厅，报名一门线下体验课。</p>
+      <section className={styles.hero}>
+        <div className={styles.heroCopy}>
+          <p className="section-kicker" style={{ color: "#b4553e" }}>
+            INTANGIBLE HERITAGE · FUZHOU
+          </p>
+          <h1>
+            手艺，还在
+            <span>坊巷里</span>
+          </h1>
+          <p className={styles.lead}>
+            逛传承人的线上展厅，再报一门线下体验课。寿山石、脱胎漆器、软木画、
+            茉莉花茶、闽剧与鱼丸，都能亲手做一次。
+          </p>
+          <div className={styles.stats}>
+            <div><strong>{works.length || "6"}</strong><span>件作品</span></div>
+            <div><strong>{classes.length || "6"}</strong><span>门体验课</span></div>
+            <div><strong>{totalSeats || "89"}</strong><span>个名额</span></div>
+          </div>
+          <div className={styles.heroActions}>
+            <button className={styles.primaryAction} onClick={() => openTab("WORKS", "works")}>
+              逛作品展厅 <ArrowRight size={14} />
+            </button>
+            <button className={styles.ghostAction} onClick={() => openTab("CLASSES", "classes")}>
+              看体验课
+            </button>
+          </div>
+          <p className={styles.heroNote}>
+            点击作品看细节 · 体验课由传承人/工作室开课 · 报名后到店参加
+          </p>
         </div>
-        <Link href="/shop" className="resource-back">
-          去商城逛逛
-        </Link>
-      </header>
 
-      {error && (
-        <div className="mx-auto mb-3 w-[min(1200px,calc(100%-48px))]">
-          <p className="text-sm text-brand">{error}</p>
+        <div className={styles.mosaic}>
+          {works.slice(0, 4).map((work, index) => (
+            <button
+              className={`${styles.tile} ${styles.tileButton} ${index === 0 ? styles.tileMain : ""}`}
+              key={work.id}
+              onClick={() => setSelectedWork(work)}
+              style={{
+                backgroundImage: `linear-gradient(180deg, rgba(25,30,26,0.02), rgba(25,30,26,0.66)), url('${work.image || "/images/resources/shangxiahang.jpg"}')`,
+              }}
+            >
+              <span className={styles.tileTag}>非遗作品</span>
+              <strong>{work.title}</strong>
+              <small>{merchantName(work.merchant)}</small>
+            </button>
+          ))}
+          {!works.length && <div className={styles.tileSkeleton} />}
+        </div>
+      </section>
+
+      <section className={styles.rail}>
+        <button className={styles.railCard} onClick={() => openTab("WORKS", "works")}>
+          <span className={styles.railIcon}><Palette size={18} /></span>
+          <span className={styles.railText}>
+            <b>作品线上展厅</b>
+            <small>{works.length} 件作品 · 点击看细节</small>
+          </span>
+          <em><ArrowRight size={14} /></em>
+        </button>
+        <button className={styles.railCard} onClick={() => openTab("CLASSES", "classes")}>
+          <span className={styles.railIcon}><GraduationCap size={18} /></span>
+          <span className={styles.railText}>
+            <b>线下体验课</b>
+            <small>{classes.length} 门课 · 从 ¥{lowestPrice ? Math.round(lowestPrice / 100) : 88} 起</small>
+          </span>
+          <em><ArrowRight size={14} /></em>
+        </button>
+        <button className={styles.railCard} onClick={() => openTab("ALL", "learn-catalog")}>
+          <span className={styles.railIcon}><Users size={18} /></span>
+          <span className={styles.railText}>
+            <b>传承人与工作室</b>
+            <small>{new Set(works.map((work) => work.merchant.id)).size || 1} 间工作室 · 线下可约</small>
+          </span>
+          <em><ArrowRight size={14} /></em>
+        </button>
+      </section>
+
+      <section className={styles.toolbar} id="learn-catalog">
+        <div className={styles.searchBox}>
+          <Search size={18} />
+          <input
+            value={keyword}
+            onChange={(event) => setKeyword(event.target.value)}
+            placeholder="搜索作品、课程，例如「软木画」「鱼丸」"
+            aria-label="搜索作品与课程"
+          />
+          {keyword && (
+            <button onClick={() => setKeyword("")} aria-label="清除搜索">
+              <X size={14} />
+            </button>
+          )}
+        </div>
+        <div className={styles.filterRow}>
+          <div className={styles.tabs}>
+            <button className={tab === "ALL" ? styles.tabActive : ""} onClick={() => setTab("ALL")}>
+              全部 <span>{works.length + classes.length}</span>
+            </button>
+            <button
+              className={tab === "WORKS" ? styles.tabActive : ""}
+              onClick={() => setTab("WORKS")}
+            >
+              作品展厅 <span>{works.length}</span>
+            </button>
+            <button
+              className={tab === "CLASSES" ? styles.tabActive : ""}
+              onClick={() => setTab("CLASSES")}
+            >
+              体验课 <span>{classes.length}</span>
+            </button>
+          </div>
+          <div className={styles.filterTools}>
+            <span className={styles.resultMeta}>
+              {keyword ? `搜索「${keyword}」` : "按内容浏览"}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {error && <div className={styles.errorBar}>{error}</div>}
+
+      <section className={styles.content}>
+        {loading ? (
+          <div className={styles.skeletonGrid}>
+            {Array.from({ length: 4 }).map((_, index) => (
+              <div className={styles.skeletonCard} key={index}>
+                <span /><b /><i />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            {showWorks && (
+              <section className={styles.section} id="works">
+                <div className={styles.sectionHead}>
+                  <div className={styles.sectionTitle}>
+                    <span>01</span>
+                    <div>
+                      <p className="section-kicker" style={{ color: "#b4553e" }}>
+                        STUDIO SHOWCASE
+                      </p>
+                      <h3>
+                        作品线上展厅
+                        <em>{filteredWorks.length}</em>
+                      </h3>
+                      <p>寿山石、漆器、软木画、脸谱与茶席，点开看作品细节。</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setTab("WORKS")}>
+                    只看作品 <ArrowRight size={13} />
+                  </button>
+                </div>
+                {filteredWorks.length ? (
+                  <div className={styles.scenicGrid}>
+                    {filteredWorks.map((work) => (
+                      <WorkCard key={work.id} work={work} onOpen={setSelectedWork} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className={styles.empty}>
+                    <Palette size={26} />
+                    <strong>没有找到相关作品</strong>
+                    <p>换个关键词，或看看体验课。</p>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {showClasses && (
+              <section className={styles.section} id="classes">
+                <div className={styles.sectionHead}>
+                  <div className={styles.sectionTitle}>
+                    <span>02</span>
+                    <div>
+                      <p className="section-kicker" style={{ color: "#b4553e" }}>
+                        HANDS-ON CLASSES
+                      </p>
+                      <h3>
+                        线上预约体验课
+                        <em>{filteredClasses.length}</em>
+                      </h3>
+                      <p>从入门到完成一件小作品，名额有限，报满即止。</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setTab("CLASSES")}>
+                    只看课程 <ArrowRight size={13} />
+                  </button>
+                </div>
+                {filteredClasses.length ? (
+                  <div className={styles.classGrid}>
+                    {filteredClasses.map((item) => (
+                      <article className={`${styles.card} ${styles.classCard}`} key={item.id}>
+                        <div
+                          className={styles.classImage}
+                          style={{
+                            backgroundImage: `url('${item.image || "/images/resources/molihua.jpg"}')`,
+                          }}
+                        >
+                          <span className={styles.badge}>
+                            <GraduationCap size={11} /> 体验课
+                          </span>
+                          <span className={styles.district}>
+                            {item.enrollmentCount}/{item.capacity} 人
+                          </span>
+                        </div>
+                        <div className={styles.classBody}>
+                          <h4>{item.title}</h4>
+                          <p>{item.summary}</p>
+                          <ul className={styles.classMeta}>
+                            <li><CalendarDays size={12} /> {item.schedule}</li>
+                            {item.location && <li><MapPin size={12} /> {item.location}</li>}
+                            <li><Users size={12} /> {merchantName(item.merchant)}</li>
+                          </ul>
+                          <div className={styles.enrollRow}>
+                            <span className={styles.price}>
+                              {item.price > 0 ? formatPrice(item.price) : "免费"}
+                              <small>/人</small>
+                            </span>
+                            {item.enrolled ? (
+                              <div className="flex items-center gap-2">
+                                <span className="flex items-center gap-1 text-[11px] text-[#6d7f62]">
+                                  <Check size={12} /> 已报名
+                                </span>
+                                <button className={styles.cancelBtn} onClick={() => cancel(item)}>
+                                  取消
+                                </button>
+                              </div>
+                            ) : (
+                              <button
+                                className={styles.enrollBtn}
+                                onClick={() => enroll(item)}
+                                disabled={item.enrollmentCount >= item.capacity}
+                              >
+                                {item.enrollmentCount >= item.capacity ? "名额已满" : "立即报名"}
+                              </button>
+                            )}
+                          </div>
+                          <span className={styles.seatText}>
+                            剩余 {Math.max(0, item.capacity - item.enrollmentCount)} 个名额
+                          </span>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className={styles.empty}>
+                    <GraduationCap size={26} />
+                    <strong>没有找到相关课程</strong>
+                    <p>换个关键词，或先看看作品展厅。</p>
+                  </div>
+                )}
+              </section>
+            )}
+          </>
+        )}
+      </section>
+
+      {selectedWork && (
+        <div className={styles.modalBackdrop} onClick={() => setSelectedWork(null)}>
+          <div
+            className={styles.modal}
+            role="dialog"
+            aria-modal="true"
+            aria-label={selectedWork.title}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div
+              className={styles.modalImage}
+              style={{
+                backgroundImage: `url('${selectedWork.image || "/images/resources/shangxiahang.jpg"}')`,
+              }}
+            />
+            <div className={styles.modalBody}>
+              <button
+                className={styles.modalClose}
+                onClick={() => setSelectedWork(null)}
+                aria-label="关闭"
+              >
+                <X size={16} />
+              </button>
+              <p className={styles.modalKicker}>STUDIO WORK · 非遗作品</p>
+              <h3>{selectedWork.title}</h3>
+              <p>{selectedWork.description}</p>
+              <div className={styles.tags}>
+                <span>非遗作品</span>
+                <span>福州</span>
+                <span>可线下体验</span>
+              </div>
+              <div className={styles.modalMeta}>
+                <span>传承人 / 工作室 <b>{merchantName(selectedWork.merchant)}</b></span>
+                <span>想看实物？报名对应体验课，到工作室慢慢看。</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
-
-      <section className="resource-results">
-        <div className="resource-result-heading">
-          <h2>作品线上展厅</h2>
-          <span>共 {works.length} 件</span>
-        </div>
-
-        {loading ? (
-          <div className="resource-empty">正在加载……</div>
-        ) : works.length ? (
-          <div className="resource-grid">
-            {works.map((work) => (
-              <article className="resource-card" key={work.id}>
-                <div
-                  className="resource-card-image"
-                  style={{
-                    backgroundImage: `url('${work.image || "/images/zhenhailou.jpg"}')`,
-                  }}
-                />
-                <div className="resource-card-body">
-                  <div className="resource-card-top">
-                    <span className="resource-category">非遗作品</span>
-                    <span className="resource-district">
-                      {work.merchant.merchantName || work.merchant.nickname || work.merchant.username}
-                    </span>
-                  </div>
-                  <h3>{work.title}</h3>
-                  <p>{work.description}</p>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="resource-empty">还没有作品，等传承人上传后再来看看。</div>
-        )}
-      </section>
-
-      <section className="resource-results">
-        <div className="resource-result-heading">
-          <h2>线上预约体验课</h2>
-          <span>共 {classes.length} 门</span>
-        </div>
-
-        {loading ? (
-          <div className="resource-empty">正在加载……</div>
-        ) : classes.length ? (
-          <div className="resource-grid">
-            {classes.map((item) => (
-              <article className="resource-card" key={item.id}>
-                <div
-                  className="resource-card-image"
-                  style={{
-                    backgroundImage: `url('${item.image || "/images/molihua.jpg"}')`,
-                  }}
-                />
-                <div className="resource-card-body">
-                  <div className="resource-card-top">
-                    <span className="resource-category">
-                      <GraduationCap size={12} className="mr-1 inline" />
-                      体验课
-                    </span>
-                    <span className="resource-district">
-                      {item.enrollmentCount}/{item.capacity} 人
-                    </span>
-                  </div>
-                  <h3>{item.title}</h3>
-                  <p>{item.summary}</p>
-
-                  <div className="mt-3 space-y-1 text-xs text-stone-500">
-                    <p className="flex items-center gap-1">
-                      <CalendarDays size={13} /> {item.schedule}
-                    </p>
-                    {item.location && (
-                      <p className="flex items-center gap-1">
-                        <MapPin size={13} /> {item.location}
-                      </p>
-                    )}
-                    <p className="flex items-center gap-1">
-                      <Users size={13} />
-                      {item.merchant.merchantName || item.merchant.nickname || item.merchant.username}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="font-semibold text-brand">
-                      {item.price > 0 ? formatPrice(item.price) : "免费"}
-                    </span>
-                    {item.enrolled ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-tea">已报名</span>
-                        <button
-                          className="btn-ghost py-1 text-xs"
-                          onClick={() => cancel(item)}
-                        >
-                          取消报名
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        className="btn py-1.5 text-xs"
-                        onClick={() => enroll(item)}
-                        disabled={item.enrollmentCount >= item.capacity}
-                      >
-                        {item.enrollmentCount >= item.capacity ? "名额已满" : "立即报名"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="resource-empty">还没有体验课，等传承人开课后就能报名啦。</div>
-        )}
-      </section>
     </main>
   );
 }

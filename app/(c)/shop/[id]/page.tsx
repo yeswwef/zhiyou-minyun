@@ -17,6 +17,34 @@ import {
   type ProductDto,
 } from "@/features/merchant/types";
 
+const PURCHASE_NOTES: Record<string, string[]> = {
+  HOMESTAY: [
+    "入住前一天 18:00 前可免费取消，之后取消收取首晚房费。",
+    "到店出示订单核销码办理入住，需携带有效身份证件。",
+    "含双早；加床与宠物政策以商户现场说明为准。",
+  ],
+  DINING: [
+    "到店出示核销码使用，建议提前 1 天电话预约。",
+    "套餐内容固定，部分时令菜品可能随季节微调。",
+    "如需发票，请在到店时向商户登记。",
+  ],
+  HANDICRAFT: [
+    "手工作品存在天然纹理与手工差异，每件略有不同。",
+    "易碎品默认顺丰保价发货，福州本地可到店自取。",
+    "签收后 7 天内非人为损坏可联系商户协商。",
+  ],
+  SOUVENIR: [
+    "食品类伴手礼请按包装说明保存，开封后尽快食用。",
+    "满 99 元福州主城区包邮，其他地区按实际运费结算。",
+    "礼盒外观以实物为准，图片为演示素材。",
+  ],
+  STUDYTOUR: [
+    "研学产品需提前 2 天预约，成团人数以商户确认为准。",
+    "含讲解、材料与保险；往返交通与个人消费不含。",
+    "雨天顺延或全额退款，具体以商户通知为准。",
+  ],
+};
+
 /**
  * 渲染游客端／商城／指定id界面及其子组件。
  * 接口协作：/api/shop/products/${params.id}、/api/orders、/api/orders/${order.id}。
@@ -130,6 +158,11 @@ export default function ShopProductPage() {
               </span>
               <h1>{product.title}</h1>
               <p>{product.summary}</p>
+              <div className="detail-hero-meta">
+                <em>{product.stock > 0 ? `余 ${product.stock} ${product.unit || "份"}` : "暂时售罄"}</em>
+                <em>{product.location || "福州"}</em>
+                <em>到店核销 / 顺丰发货</em>
+              </div>
             </div>
           </div>
 
@@ -139,6 +172,26 @@ export default function ShopProductPage() {
                 <p className="section-kicker">ABOUT</p>
                 <h2>商品介绍</h2>
                 <p>{product.description || product.summary}</p>
+              </section>
+
+              <section>
+                <p className="section-kicker">GOOD TO KNOW</p>
+                <h2>购买与使用</h2>
+                <div className="detail-highlight">
+                  <Package size={18} />
+                  <div>
+                    <b>下单后请联系商户确认</b>
+                    <p>演示环境为本地模拟支付，不产生真实扣款；核销码可在「我的订单」查看。</p>
+                  </div>
+                </div>
+                <ul className="space-y-2.5 text-sm leading-7 text-stone-600">
+                  {(PURCHASE_NOTES[product.category] ?? []).map((note) => (
+                    <li key={note} className="flex gap-2">
+                      <span className="mt-3 h-1 w-1 shrink-0 rounded-full bg-[#d85c43]" />
+                      <span>{note}</span>
+                    </li>
+                  ))}
+                </ul>
               </section>
 
               <section>
