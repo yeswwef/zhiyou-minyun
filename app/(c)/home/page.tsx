@@ -7,7 +7,6 @@
 import {
   ArrowRight,
   BatteryCharging,
-  CalendarDays,
   ChevronRight,
   CloudRain,
   GraduationCap,
@@ -88,11 +87,6 @@ const PRODUCTS = [
   { image: "/images/molihua.jpg", title: "福州茉莉花茶礼盒", detail: "闽都茶香 · 可现场取货", price: "¥ 68", icon: Store },
   { image: "/images/shangxiahang.jpg", title: "上下杭手作明信片", detail: "旅行纪念 · 快递到家", price: "¥ 29", icon: Truck },
   { image: "/images/zhenhailou.jpg", title: "闽都古厝文创摆件", detail: "限量文创 · 商户直发", price: "¥ 128", icon: ShoppingBag },
-];
-
-const EVENTS = [
-  { title: "福州茉莉花文化节", date: "06.15 - 06.30", place: "仓山 · 茉莉花基地", status: "报名中" },
-  { title: "闽都古厝夜游季", date: "07.01 - 07.20", place: "鼓楼 · 三坊七巷", status: "即将开始" },
 ];
 
 /**
@@ -290,11 +284,11 @@ export default function CHome() {
           <div className="home-content-image" style={{ backgroundImage: "url('/images/molihua.jpg')" }} />
           <b>福州茉莉花茶</b>
         </a>
-        <a href="#events" className="home-content-card">
+        <Link href="/feature/events" className="home-content-card">
           <div><strong>官方活动</strong><small>精彩活动 · 不容错过</small></div>
           <div className="home-content-image" style={{ backgroundImage: "url('/images/shangxiahang.jpg')" }} />
           <b>福州文旅嘉年华</b>
-        </a>
+        </Link>
         <Link href="/community" className="home-content-card">
           <div><strong>游记故事</strong><small>真实的旅行，动人的福州</small></div>
           <div className="home-content-image" style={{ backgroundImage: "url('/images/sanfangqixiang.jpg')" }} />
@@ -446,11 +440,6 @@ export default function CHome() {
           </div>
           <Link className="write-story" href="/community/new?type=checkin"><span className="write-icon"><PenLine size={20} /></span><strong>写一篇游记</strong><small>记录你的福州时刻</small><ArrowRight size={18} /></Link>
         </div>
-      </section>
-
-      <section className="section-wrap events-section" id="events">
-        <div className="section-heading"><div><p className="section-kicker">官方活动</p><h2>这座城，<em>一直有好事发生</em></h2></div><a className="text-link" href="#events-all">全部活动 <ArrowRight size={16} /></a></div>
-        <div className="event-grid">{EVENTS.map((event) => <a href="#event" className="event-card" key={event.title}><span className="event-date"><CalendarDays size={16} /> {event.date}</span><h3>{event.title}</h3><p><MapPin size={14} /> {event.place}</p><b>{event.status}</b><ChevronRight size={18} /></a>)}</div>
       </section>
 
       <section className="section-wrap learning-section" id="learn">
