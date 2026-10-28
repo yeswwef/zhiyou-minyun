@@ -25,7 +25,11 @@ function toResource(resource: {
   description: string | null;
   history: string | null;
   openTime: string | null;
+  traffic: string | null;
   address: string | null;
+  goodFor: string | null;
+  source: string;
+  license: string | null;
   tags: Array<{ tag: { name: string } }>;
 }) {
   const category = resource.type === "SCENIC" ? "景点" : resource.type === "ICH" ? "非遗" : "美食";
@@ -39,7 +43,11 @@ function toResource(resource: {
     description: resource.description ?? "",
     history: resource.history ?? "",
     openingHours: resource.openTime ?? "以现场公告为准",
+    traffic: resource.traffic ?? "建议自驾或乘公共交通前往",
     address: resource.address ?? "福州市",
+    goodFor: resource.goodFor ?? "文化体验、城市漫步",
+    source: resource.source,
+    license: resource.license ?? "文字为公开资料整理，图片为公开网络演示素材",
     tags: resource.tags.map(({ tag }) => tag.name),
   };
 }

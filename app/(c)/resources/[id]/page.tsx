@@ -2,7 +2,7 @@
  * @module-note app/(c)/resources/[id]/page.tsx
  * 游客端／文旅资源／指定id页面。服务端路由入口负责组装页面或跳转，复杂交互委托给客户端组件。
  */
-import { ArrowLeft, Clock3, MapPin, Star } from "lucide-react";
+import { ArrowLeft, Bus, Clock3, Lightbulb, MapPin, Star } from "lucide-react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
@@ -84,6 +84,10 @@ export default async function ResourceDetailPage({
           <span>{resource.type === "SCENIC" ? "景点" : resource.type === "ICH" ? "非遗" : "美食"} · {resource.district}</span>
           <h1>{resource.title}</h1>
           <p>{resource.summary}</p>
+          <div className="detail-hero-meta">
+            <em><Clock3 size={13} /> {resource.openTime ?? "以现场公告为准"}</em>
+            <em><MapPin size={13} /> {resource.address ?? "福州市"}</em>
+          </div>
         </div>
       </div>
 
@@ -98,6 +102,14 @@ export default async function ResourceDetailPage({
             <Link className="detail-community-action review" href={`/community/new?type=review&resourceId=${resource.slug}`}>
               <Star size={16} /> 写评价
             </Link>
+          </div>
+
+          <div className="detail-highlight">
+            <Lightbulb size={18} />
+            <div>
+              <b>适合这样玩</b>
+              <p>{resource.goodFor ?? "适合慢慢走、慢慢看，把周边街巷一起串起来。"}</p>
+            </div>
           </div>
 
           <section>
@@ -133,6 +145,14 @@ export default async function ResourceDetailPage({
           </div>
 
           <div>
+            <Bus size={18} />
+            <span>
+              <b>怎么去</b>
+              {resource.traffic ?? "建议自驾或乘公共交通前往，具体线路以导航为准。"}
+            </span>
+          </div>
+
+          <div>
             <span className="fact-dot" />
             <span>
               <b>相关标签</b>
@@ -151,6 +171,16 @@ export default async function ResourceDetailPage({
               {resource.source}
             </span>
           </div>
+
+          {resource.license && (
+            <div>
+              <span className="fact-dot" />
+              <span>
+                <b>素材说明</b>
+                {resource.license}
+              </span>
+            </div>
+          )}
         </aside>
       </div>
 

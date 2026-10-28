@@ -15,5 +15,9 @@ export type DestinationResource = {
   description: string;
   history: string;
   openingHours: string;
+  traffic: string;
   address: string;
+  goodFor: string;
+  source: string;
+  license: string;
 };
