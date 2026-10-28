@@ -6,23 +6,25 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertCircle, ArrowLeft, BatteryCharging, CheckCircle2, ChevronDown, Cloud, CloudRain, Hospital,
-  LoaderCircle, MapPin, Navigation, ParkingCircle, Phone, RefreshCw, ShieldCheck, Sun, Toilet, X,
+  LoaderCircle, LocateFixed, Map, MapPin, Navigation, ParkingCircle, Phone, RefreshCw, ShieldCheck, Sun, Toilet, X,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
 import {
-  EMERGENCY_KINDS, EMERGENCY_LABEL, FACILITY_LABEL, FACILITY_TYPES,
+  EMERGENCY_KINDS, EMERGENCY_LABEL, FACILITY_LABEL, FACILITY_TYPES, isValidCoordinate,
   type EmergencyKind, type EmergencyResponse, type Facility, type FacilitySource,
   type FacilityType, type WeatherResponse,
 } from "./types";
+import { HelpMap } from "./HelpMap";
 import s from "./help.module.css";
 
 /** 定位失败时的默认中心点：三坊七巷。 */
 const DEFAULT_CENTER = { lat: 26.0818, lng: 119.2949 };
 
-const TABS: { type: FacilityType; icon: typeof Toilet }[] = [
+const TABS: { type: FacilityType | "ALL"; icon: typeof Toilet }[] = [
+  { type: "ALL", icon: Map },
   { type: "TOILET", icon: Toilet },
   { type: "PARKING", icon: ParkingCircle },
   { type: "CHARGING", icon: BatteryCharging },
@@ -35,19 +37,20 @@ function formatDistance(metres: number): string {
 }
 
 /** 按天气文案挑一个图标，仅用于视觉区分。 */
-function weatherIcon(text: string) {
-  if (/雨|雷/.test(text)) return CloudRain;
-  if (/云|阴/.test(text)) return Cloud;
-  return Sun;
+function WeatherGlyph({ text, size = 22 }: { text: string; size?: number }) {
+  if (/雨|雷/.test(text)) return <CloudRain size={size} />;
+  if (/云|阴/.test(text)) return <Cloud size={size} />;
+  return <Sun size={size} />;
 }
 
 /**
  * 便民与应急页面：定位、设施列表、天气与求助弹层。
  */
 export function HelpExperience() {
-  const [type, setType] = useState<FacilityType>("TOILET");
+  const [type, setType] = useState<FacilityType | "ALL">("ALL");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [coords, setCoords] = useState(DEFAULT_CENTER);
-  const [geo, setGeo] = useState<"idle" | "locating" | "ok" | "denied">("idle");
+  const [geo, setGeo] = useState<"idle" | "locating" | "ok" | "denied">("locating");
   const [items, setItems] = useState<Facility[]>([]);
   const [source, setSource] = useState<FacilitySource>("seed");
   const [note, setNote] = useState("");
@@ -77,7 +80,13 @@ export function HelpExperience() {
     setGeo("locating");
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setCoords({ lat: position.coords.latitude, lng: position.coords.longitude });
+        const next = { lat: position.coords.latitude, lng: position.coords.longitude };
+        // 境外坐标会被服务端拒绝；保留三坊七巷中心并明确提示未定位。
+        if (!isValidCoordinate(next.lat, next.lng)) {
+          setGeo("denied");
+          return;
+        }
+        setCoords(next);
         setGeo("ok");
       },
       () => setGeo("denied"),
@@ -85,16 +94,23 @@ export function HelpExperience() {
     );
   }, []);
 
-  useEffect(() => { locate(); }, [locate]);
+  useEffect(() => {
+    // 放进定时器，避免在 effect 内同步 setState 触发级联渲染。
+    const timer = window.setTimeout(locate, 0);
+    return () => window.clearTimeout(timer);
+  }, [locate]);
 
   // 支持首页深链：?type=PARKING 直接切到对应 Tab，?help=1 自动打开求助弹层。
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const requested = (params.get("type") || "").toUpperCase();
-    if ((FACILITY_TYPES as readonly string[]).includes(requested)) setType(requested as FacilityType);
-    if (params.get("help") === "1") openHelp();
-    // 只在首次挂载时读取一次，避免后续 state 变化重复触发。
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const timer = window.setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      const requested = (params.get("type") || "").toUpperCase();
+      if (requested === "ALL" || (FACILITY_TYPES as readonly string[]).includes(requested)) {
+        setType(requested as FacilityType | "ALL");
+      }
+      if (params.get("help") === "1") openHelp();
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   // 天气只在进入页面时取一次；失败不影响设施查询。
@@ -144,6 +160,12 @@ export function HelpExperience() {
     void run();
     return () => { alive = false; };
   }, [type, coords.lat, coords.lng]);
+
+  // 选中地图点位时，让对应列表卡片进入可视区域。
+  useEffect(() => {
+    if (!selectedId) return;
+    document.getElementById(`help-facility-${selectedId}`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }, [selectedId]);
 
   /** 手动刷新天气：?refresh=1 跳过服务端 10 分钟缓存。 */
   async function refreshWeather() {
@@ -198,8 +220,7 @@ export function HelpExperience() {
     }
   }
 
-  const WeatherIcon = useMemo(() => weatherIcon(weather?.now?.weather ?? ""), [weather?.now?.weather]);
-  const activeLabel = FACILITY_LABEL[type];
+  const activeLabel = type === "ALL" ? "设施" : FACILITY_LABEL[type];
 
   return (
     <div className={s.shell}>
@@ -219,131 +240,115 @@ export function HelpExperience() {
       </header>
 
       <main className={s.main}>
-        <section className={s.hero}>
-          <p className={s.kicker}>TRAVEL HELP · 便民与应急</p>
-          <h1>在路上更安心，<em>随手可查</em></h1>
-          <p className={s.lead}>厕所、停车、充电、医疗四类设施一键查找，按距离排序并可直接导航；遇到紧急情况可登记求助工单并拨打就近电话。</p>
-          <div className={s.tags}>
-            <span>福州城区</span>
-            <span>距离优先</span>
-            <span>可导航</span>
+        <section className={s.pageHead}>
+          <div className={s.headCopy}>
+            <p className={s.kicker}>TRAVEL HELP · 便民与应急</p>
+            <h1>在路上更安心，<em>随手可查</em></h1>
+            <p className={s.lead}>厕所、停车、充电、医疗四类设施在同一张真实地图上查看，点选即联动列表；点击地图点位可直接在高德地图中打开。</p>
+          </div>
+          <div className={s.headSide}>
+            <button
+              type="button"
+              className={s.weatherChip}
+              onClick={() => setWeatherOpen((value) => !value)}
+              aria-expanded={weatherOpen}
+            >
+              <span className={s.weatherChipIcon}><WeatherGlyph text={weather?.now?.weather ?? ""} size={18} /></span>
+              <span className={s.weatherChipText}>
+                <b>{weather?.ok && weather.now ? `${weather.now.temperature}°` : "天气"}</b>
+                <small>
+                  {weather?.ok && weather.now
+                    ? `${weather.now.city} · ${weather.now.weather}`
+                    : weather?.note || "正在获取"}
+                </small>
+              </span>
+              <ChevronDown size={14} className={weatherOpen ? s.chevOpen : ""} />
+            </button>
+            <span className={s.headMeta}>福州城区 · 2 km 范围</span>
           </div>
         </section>
 
-        {/* 天气条：实况 + 3 天预报；点「详情」展开完整数据 */}
-        <section className={s.weatherBar} aria-label="福州天气">
-          {weather?.ok && weather.now ? (
-            <>
-              <div className={s.weatherRow}>
-                <div className={s.weatherMain}>
-                  <span className={s.weatherIcon}><WeatherIcon size={24} /></span>
-                  <div>
-                    <strong>{weather.now.temperature}°</strong>
-                    <small>{weather.now.city} · {weather.now.weather} · {weather.now.windDirection}风 {weather.now.windPower} 级</small>
-                  </div>
+        {weatherOpen && (
+          <section className={s.weatherPanel} aria-label="福州天气详情">
+            {weather?.ok && weather.now ? (
+              <>
+                <div className={s.weatherStats}>
+                  <div><span>天气</span><b>{weather.now.weather}</b></div>
+                  <div><span>气温</span><b>{weather.now.temperature}°C</b></div>
+                  <div><span>风向</span><b>{weather.now.windDirection}</b></div>
+                  <div><span>风力</span><b>{weather.now.windPower} 级</b></div>
+                  <div><span>湿度</span><b>{weather.now.humidity}%</b></div>
+                  <div><span>观测时间</span><b>{weather.now.reportTime}</b></div>
                 </div>
-                <div className={s.forecast}>
-                  {(weather.casts ?? []).map((cast) => (
-                    <div key={cast.date} className={s.cast}>
-                      <b>{cast.week} {cast.date.slice(5)}</b>
-                      <span>{cast.dayWeather}</span>
-                      <small>{cast.nightTemp}° / {cast.dayTemp}°</small>
-                    </div>
-                  ))}
+
+                <div className={s.weatherTableWrap}>
+                  <table className={s.weatherTable}>
+                    <thead>
+                      <tr><th>日期</th><th>白天</th><th>夜间</th><th>最低 / 最高</th><th>白天风</th><th>夜间风</th></tr>
+                    </thead>
+                    <tbody>
+                      {(weather.casts ?? []).map((cast) => (
+                        <tr key={cast.date}>
+                          <td>{cast.date.slice(5)} {cast.week}</td>
+                          <td>{cast.dayWeather}</td>
+                          <td>{cast.nightWeather}</td>
+                          <td>{cast.nightTemp}° / {cast.dayTemp}°</td>
+                          <td>{cast.dayWind} {cast.dayPower} 级</td>
+                          <td>{cast.nightWind} {cast.nightPower} 级</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
+
+                <div className={s.weatherFoot}>
+                  <span>
+                    来源：高德地图 Web 服务「天气查询」· {weather.now.province}{weather.now.city}
+                    · adcode {weather.now.adcode} · {weather.cached ? "服务端缓存（10 分钟内）" : "刚刚更新"}
+                  </span>
+                  <button className={s.refreshBtn} onClick={refreshWeather} disabled={weatherRefreshing}>
+                    <RefreshCw size={13} className={weatherRefreshing ? s.spinner : ""} />
+                    {weatherRefreshing ? "刷新中…" : "刷新"}
+                  </button>
+                </div>
+                <p className={s.weatherNote}>
+                  该接口提供实况与未来 3 天预报，不含逐小时预报、空气质量与灾害预警。
+                </p>
+              </>
+            ) : (
+              <p className={s.weatherNote}>{weather?.degraded ? (weather.note || "天气服务暂不可用") : "正在获取天气…"}</p>
+            )}
+          </section>
+        )}
+
+        <div className={s.toolbar}>
+          <div className={s.tabs} role="tablist" aria-label="设施类型">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
                 <button
-                  className={s.weatherMore}
-                  onClick={() => setWeatherOpen((value) => !value)}
-                  aria-expanded={weatherOpen}
+                  key={tab.type}
+                  role="tab"
+                  aria-selected={type === tab.type}
+                  className={`${s.tab} ${type === tab.type ? s.tabActive : ""}`}
+                  onClick={() => { setType(tab.type); setSelectedId(null); }}
                 >
-                  {weatherOpen ? "收起" : "详情"}
-                  <ChevronDown size={15} className={weatherOpen ? s.chevOpen : ""} />
+                  <span className={s.tabIcon}><Icon size={16} /></span>
+                  {tab.type === "ALL" ? "全部设施" : FACILITY_LABEL[tab.type]}
                 </button>
-              </div>
-
-              {weatherOpen && (
-                <div className={s.weatherDetail}>
-                  <div className={s.weatherStats}>
-                    <div><span>天气</span><b>{weather.now.weather}</b></div>
-                    <div><span>气温</span><b>{weather.now.temperature}°C</b></div>
-                    <div><span>风向</span><b>{weather.now.windDirection}</b></div>
-                    <div><span>风力</span><b>{weather.now.windPower} 级</b></div>
-                    <div><span>湿度</span><b>{weather.now.humidity}%</b></div>
-                    <div><span>观测时间</span><b>{weather.now.reportTime}</b></div>
-                  </div>
-
-                  <div className={s.weatherTableWrap}>
-                    <table className={s.weatherTable}>
-                      <thead>
-                        <tr><th>日期</th><th>白天</th><th>夜间</th><th>最低 / 最高</th><th>白天风</th><th>夜间风</th></tr>
-                      </thead>
-                      <tbody>
-                        {(weather.casts ?? []).map((cast) => (
-                          <tr key={cast.date}>
-                            <td>{cast.date.slice(5)} {cast.week}</td>
-                            <td>{cast.dayWeather}</td>
-                            <td>{cast.nightWeather}</td>
-                            <td>{cast.nightTemp}° / {cast.dayTemp}°</td>
-                            <td>{cast.dayWind} {cast.dayPower} 级</td>
-                            <td>{cast.nightWind} {cast.nightPower} 级</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <div className={s.weatherFoot}>
-                    <span>
-                      来源：高德地图 Web 服务「天气查询」· {weather.now.province}{weather.now.city}
-                      · adcode {weather.now.adcode} · {weather.cached ? "服务端缓存（10 分钟内）" : "刚刚更新"}
-                    </span>
-                    <button className={s.refreshBtn} onClick={refreshWeather} disabled={weatherRefreshing}>
-                      <RefreshCw size={13} className={weatherRefreshing ? s.spinner : ""} />
-                      {weatherRefreshing ? "刷新中…" : "刷新"}
-                    </button>
-                  </div>
-                  <p className={s.weatherNote}>
-                    该接口提供实况与未来 3 天预报，不含逐小时预报、空气质量与灾害预警。
-                  </p>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className={s.weatherDegraded}>
-              <CloudRain size={18} />
-              <span>{weather?.degraded ? (weather.note || "天气服务暂不可用") : "正在获取天气…"}</span>
-            </div>
-          )}
-        </section>
-
-        {/* 四类设施 Tab */}
-        <div className={s.tabs} role="tablist" aria-label="设施类型">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.type}
-                role="tab"
-                aria-selected={type === tab.type}
-                className={`${s.tab} ${type === tab.type ? s.tabActive : ""}`}
-                onClick={() => setType(tab.type)}
-              >
-                <span className={s.tabIcon}><Icon size={17} /></span>
-                {FACILITY_LABEL[tab.type]}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className={s.listHead}>
-          <h2>附近{activeLabel}</h2>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <small>
-              {geo === "locating" ? "正在定位…" : geo === "denied" ? "未获得定位，按三坊七巷中心查找" : "已按当前位置排序"}
-            </small>
+              );
+            })}
+          </div>
+          <div className={s.toolbarMeta}>
+            <span className={s.geoStatus}>
+              {geo === "locating" ? "正在定位…" : geo === "denied" ? "未定位 · 按三坊七巷查找" : "已定位 · 按距离排序"}
+            </span>
             <span className={`${s.badgeSource} ${source === "amap" ? s.badgeAmap : s.badgeSeed}`}>
               {source === "amap" ? "高德实时数据" : "内置示例数据"}
             </span>
+            <button className={s.locateBtn} onClick={locate} disabled={geo === "locating"}>
+              <LocateFixed size={14} />{geo === "locating" ? "定位中" : "重新定位"}
+            </button>
           </div>
         </div>
 
@@ -351,47 +356,85 @@ export function HelpExperience() {
           <p className={s.noteBar}><AlertCircle size={14} /><span>{note}</span></p>
         )}
 
-        {loading ? (
-          <div className={s.stateBox}>
-            <span className={s.stateIcon}><LoaderCircle size={26} className={s.spinner} /></span>
-            <strong>正在查找附近{activeLabel}</strong>
-            <span>按当前位置计算距离并排序，通常 1 秒内完成。</span>
-          </div>
-        ) : error ? (
-          <div className={`${s.stateBox} ${s.errorBox}`}>
-            <span className={s.stateIcon}><AlertCircle size={26} /></span>
-            <strong>查询失败</strong>
-            <span>{error}</span>
-          </div>
-        ) : items.length === 0 ? (
-          <div className={s.stateBox}>
-            <span className={s.stateIcon}><MapPin size={26} /></span>
-            <strong>附近 2 公里内没有找到{activeLabel}</strong>
-            <span>可以尝试切换到其他设施类型，或放宽查找范围。</span>
-          </div>
-        ) : (
-          <div className={s.facilityList}>
-            {items.map((item) => (
-              <article key={item.id} className={s.facilityCard}>
-                <div className={s.facTop}>
-                  <h3 className={s.facName}>{item.name}</h3>
-                  <span className={s.facDistance}>{formatDistance(item.distance)}</span>
+        <div className={s.workspace}>
+          <section className={s.mapCard} aria-label="设施地图">
+            <HelpMap
+              items={items}
+              selectedId={selectedId}
+              center={coords}
+              locating={geo === "locating"}
+              onSelect={setSelectedId}
+              onLocate={locate}
+            />
+          </section>
+
+          <aside className={s.listPanel} aria-label="设施列表">
+            <div className={s.listHead}>
+              <div>
+                <p className={s.listKicker}>NEARBY · {source === "amap" ? "LIVE" : "DEMO"}</p>
+                <h2>附近{activeLabel}<span className={s.listCount}>{items.length}</span></h2>
+                <small>{loading ? "正在查询…" : `按距离由近到远 · ${geo === "ok" ? "当前位置" : "三坊七巷"}`}</small>
+              </div>
+            </div>
+
+            <div className={s.listScroll}>
+              {loading ? (
+                <div className={s.stateBox}>
+                  <span className={s.stateIcon}><LoaderCircle size={26} className={s.spinner} /></span>
+                  <strong>正在查找附近{activeLabel}</strong>
+                  <span>按当前位置计算距离并排序，通常 1 秒内完成。</span>
                 </div>
-                <p className={s.facMeta}>{item.address || "地址暂无"}</p>
-                <div className={s.facActions}>
-                  <a className={s.navBtn} href={item.navUrl} target="_blank" rel="noopener noreferrer">
-                    <Navigation size={14} />导航
-                  </a>
-                  {item.phone && (
-                    <a className={s.callBtn} href={`tel:${item.phone}`}>
-                      <Phone size={14} />{item.phone}
-                    </a>
-                  )}
+              ) : error ? (
+                <div className={`${s.stateBox} ${s.errorBox}`}>
+                  <span className={s.stateIcon}><AlertCircle size={26} /></span>
+                  <strong>查询失败</strong>
+                  <span>{error}</span>
                 </div>
-              </article>
-            ))}
-          </div>
-        )}
+              ) : items.length === 0 ? (
+                <div className={s.stateBox}>
+                  <span className={s.stateIcon}><MapPin size={26} /></span>
+                  <strong>附近 2 公里内没有找到{activeLabel}</strong>
+                  <span>可以尝试切换到其他设施类型，或放宽查找范围。</span>
+                </div>
+              ) : (
+                <div className={s.facilityList}>
+                  {items.map((item, index) => (
+                    <article
+                      key={item.id}
+                      id={`help-facility-${item.id}`}
+                      className={`${s.facilityCard} ${selectedId === item.id ? s.facilityCardActive : ""}`}
+                      onClick={() => setSelectedId(item.id)}
+                    >
+                      <span className={s.cardIndex} data-type={item.type}>{index + 1}</span>
+                      <div className={s.cardBody}>
+                        <div className={s.facTop}>
+                          <h3 className={s.facName}>{item.name}</h3>
+                          <span className={s.facDistance}>{formatDistance(item.distance)}</span>
+                        </div>
+                        <p className={s.facMeta}>{FACILITY_LABEL[item.type]} · {item.address || "地址暂无"}</p>
+                        <div className={s.facActions}>
+                          <a className={s.navBtn} href={item.navUrl} target="_blank" rel="noopener noreferrer" onClick={(event) => event.stopPropagation()}>
+                            <Navigation size={14} />高德地图
+                          </a>
+                          {item.phone && (
+                            <a className={s.callBtn} href={`tel:${item.phone}`} onClick={(event) => event.stopPropagation()}>
+                              <Phone size={14} />{item.phone}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className={s.listFoot}>
+              <span>点击卡片可在地图上定位</span>
+              <span>{items.length} / 24</span>
+            </div>
+          </aside>
+        </div>
       </main>
 
       <button className={s.helpFab} onClick={openHelp}>
