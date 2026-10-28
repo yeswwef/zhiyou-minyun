@@ -1,6 +1,6 @@
 /**
  * @module-note app/b/layout.tsx
- * 商户端布局。客户端组件负责状态与交互，数据经接口获取；不要在此放服务端密钥。
+ * 商户端布局。沿用票务中心的后台视觉语言：深绿侧栏、米色工作区、衬线标题。
  */
 "use client";
 
@@ -14,15 +14,17 @@ import {
   Package,
   Settings,
   Sparkles,
+  Store,
 } from "lucide-react";
 import { PageTransition } from "@/components/motion/PageTransition";
+import { BrandMark } from "@/components/BrandMark";
 
 const NAV = [
-  { href: "/b/dashboard", label: "经营看板", icon: LayoutDashboard },
-  { href: "/b/products", label: "商品管理", icon: Package },
-  { href: "/b/orders", label: "订单核销", icon: ClipboardList },
-  { href: "/b/studio", label: "非遗工作室", icon: Sparkles },
-  { href: "/b/settings", label: "账户设置", icon: Settings },
+  { href: "/b/dashboard", label: "经营看板", description: "经营数据", icon: LayoutDashboard },
+  { href: "/b/products", label: "商品管理", description: "商品与库存", icon: Package },
+  { href: "/b/orders", label: "订单核销", description: "现场核销", icon: ClipboardList },
+  { href: "/b/studio", label: "非遗工作室", description: "作品与课程", icon: Sparkles },
+  { href: "/b/settings", label: "账户设置", description: "店铺资料", icon: Settings },
 ];
 
 /** B 端商户后台外壳：左侧菜单 + 顶部栏 */
@@ -48,7 +50,7 @@ export default function BLayout({ children }: { children: React.ReactNode }) {
   }, []);
 
   /**
-   * 请求退出登录并跳转到登录或首页入口。
+   * 请求退出登录并跳转到登录页。
    * 接口协作：/api/auth/logout。
    */
   async function logout() {
@@ -58,51 +60,49 @@ export default function BLayout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-[#f6f7f5] text-ink">
-      <aside className="hidden w-60 shrink-0 border-r border-stone-200 bg-white p-5 md:block">
-        <Link
-          href="/b/dashboard"
-          className="mb-9 block font-serif text-lg font-bold"
-        >
-          智游闽韵{" "}
-          <span className="font-sans text-xs font-normal text-stone-400">
-            商户端
-          </span>
+    <div className="admin-shell">
+      <aside className="admin-sidebar">
+        <Link href="/b/dashboard" className="admin-brand">
+          <span><BrandMark size={24} /></span>
+          <span><strong>智游闽韵</strong><small>商户工作台</small></span>
         </Link>
-        <nav className="space-y-1 text-sm">
-          {NAV.map(({ href, label, icon: Icon }) => (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 transition ${
-                pathname === href
-                  ? "bg-brand-soft font-semibold text-brand"
-                  : "text-stone-600 hover:bg-stone-100 hover:text-brand"
-              }`}
-            >
-              <Icon size={17} />
-              {label}
-            </Link>
-          ))}
+        <div className="admin-sidebar-caption">MERCHANT CONSOLE</div>
+        <nav className="admin-nav" aria-label="商户端导航">
+          {NAV.map(({ href, label, description, icon: Icon }) => {
+            const active = pathname === href || pathname.startsWith(`${href}/`);
+            return (
+              <Link key={href} href={href} className={active ? "active" : ""}>
+                <span className="admin-nav-icon"><Icon size={18} /></span>
+                <span><b>{label}</b><small>{description}</small></span>
+              </Link>
+            );
+          })}
         </nav>
+        <div className="admin-sidebar-foot">
+          <Store size={16} />
+          <span><b>商户服务正常</b><small>商品、订单与课程接口在线</small></span>
+        </div>
       </aside>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between border-b border-stone-200 bg-white px-5">
+
+      <div className="admin-content">
+        <header className="admin-topbar">
           <div>
-            <span className="text-sm font-semibold">商户工作台</span>
-            <span className="ml-3 text-xs text-stone-400">
-              {shopName || "未登录"}
-            </span>
+            <p>商户工作台</p>
+            <span>FUZHOU MERCHANT CONSOLE</span>
           </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="inline-flex items-center gap-1.5 text-xs text-stone-500 transition hover:text-brand"
-          >
-            <LogOut size={14} /> 退出登录
-          </button>
+          <div className="admin-account">
+            <span className="admin-avatar">商</span>
+            <span>
+              <b>{shopName || "未登录"}</b>
+              <small>认证商户</small>
+            </span>
+            <button type="button" className="admin-logout" onClick={logout}>
+              <LogOut size={15} />退出
+            </button>
+          </div>
         </header>
-        <main className="flex-1 px-5 py-6 md:px-8">
+        <main className="admin-workspace">
+          <div className="admin-watermark" aria-hidden="true">商</div>
           <PageTransition>{children}</PageTransition>
         </main>
       </div>
