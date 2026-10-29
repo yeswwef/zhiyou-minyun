@@ -7,8 +7,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 import {
-  ArrowRight, Bookmark, Bus, CalendarDays, Check, Clock, Compass, Flag, Footprints,
-  Info, Landmark, LoaderCircle, Map, MapPin, Mountain, Route, Share2, Ship, Sparkles, Sun,
+  ArrowLeft, ArrowRight, Bookmark, Bus, CalendarDays, Check, Clock, Compass, Flag, Footprints,
+  Info, Landmark, LoaderCircle, Map as MapIcon, MapPin, Mountain, Route, Share2, Ship, Sparkles, Sun,
   Trees, Users, Utensils, Waves, X,
 } from "lucide-react";
 import { BrandMark } from "@/components/BrandMark";
@@ -16,6 +16,33 @@ import { ITINERARY_TEMPLATES, ITINERARY_THEMES, getItineraryTemplate, type Itine
 import s from "./itinerary.module.css";
 
 const SAVED_KEY = "zhiyou:itinerary-templates";
+/** AI 定制与分享路线没有封面时统一用坊巷实拍兜底。 */
+const FALLBACK_COVER = "/images/sanfangqixiang.jpg";
+
+type SummaryLine = { day: number; text: string };
+
+/** 把「Day1 …；Day2 …」拆成按天分段的摘要；没有日期标记但跨度多天时用站点名兜底。 */
+function splitSummary(plan: ItineraryTemplate): SummaryLine[] {
+  const segments = plan.routeSummary
+    .split(/[；;]\s*(?=(?:Day\s*\d+|第\s*\d+\s*天))/i)
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .map((segment) => {
+      const matched = segment.match(/^(?:Day\s*(\d+)|第\s*(\d+)\s*天)\s*[:：]?\s*(.*)$/i);
+      return matched
+        ? { day: Number(matched[1] ?? matched[2]), text: matched[3] }
+        : { day: 0, text: segment };
+    });
+
+  const days = [...new Set(plan.stops.map((stop) => stop.day))].sort((a, b) => a - b);
+  if (segments.length === 1 && days.length > 1) {
+    return days.map((day) => ({
+      day,
+      text: plan.stops.filter((stop) => stop.day === day).map((stop) => stop.name).join(" → "),
+    }));
+  }
+  return segments;
+}
 
 /** 把模板强调色注入 CSS 变量，卡片与详情共用同一主题色。 */
 const accentStyle = (accent: string) => ({ "--accent": accent } as CSSProperties);
@@ -38,6 +65,22 @@ function amapUrl(name: string) {
 
 type SessionUser = { id: string; username: string; nickname: string | null; role: string } | null;
 
+/** 服务端解析出的真实坐标点；order 用于地图标注编号，x/y 为图片内百分比位置。 */
+type MapPoint = {
+  name: string; day: number; lat: number; lng: number; order: number;
+  markerUrl: string; color: string; x: number; y: number;
+};
+
+type MapPayload = {
+  available: boolean;
+  points: MapPoint[];
+  imageUrl?: string;
+  navigationUrl?: string;
+  distanceKm?: number;
+  missing?: { name: string; day: number }[];
+  note?: string;
+};
+
 const AI_INTERESTS = ["历史文化", "非遗手作", "美食", "自然山水", "拍照", "温泉", "红色研学"];
 const AUDIENCES = ["亲子", "研学", "自驾", "老年"];
 const PACES = ["轻松", "适中", "紧凑"];
@@ -45,7 +88,15 @@ const PACES = ["轻松", "适中", "紧凑"];
 /**
  * 管理模板筛选、一键套用、详情展开、保存到我的行程和分享链接。
  */
-export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: string }) {
+export function ItineraryPlanner({
+  initialTemplateId,
+  initialSharedPlan = null,
+  shareError = "",
+}: {
+  initialTemplateId?: string;
+  initialSharedPlan?: ItineraryTemplate | null;
+  shareError?: string;
+}) {
   const initialApplied = getItineraryTemplate(initialTemplateId);
   const [filter, setFilter] = useState("全部");
   const [appliedId, setAppliedId] = useState(initialApplied?.id ?? "");
@@ -54,7 +105,7 @@ export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: st
   const [saved, setSaved] = useState<Record<string, boolean>>({});
   const [savingId, setSavingId] = useState("");
   const [notice, setNotice] = useState("");
-  const [customPlan, setCustomPlan] = useState<ItineraryTemplate | null>(null);
+  const [customPlan, setCustomPlan] = useState<ItineraryTemplate | null>(initialSharedPlan);
   const [aiDays, setAiDays] = useState(2);
   const [audience, setAudience] = useState("亲子");
   const [pace, setPace] = useState("适中");
@@ -63,11 +114,15 @@ export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: st
   const [planError, setPlanError] = useState("");
   const [planStatus, setPlanStatus] = useState("");
   const [personalized, setPersonalized] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  const [mapData, setMapData] = useState<(MapPayload & { key: string }) | null>(null);
   const detail = useRef<HTMLElement>(null);
+  const templates = useRef<HTMLElement>(null);
 
   const applied = customPlan ?? getItineraryTemplate(appliedId) ?? null;
   const visible = filter === "全部" ? ITINERARY_TEMPLATES : ITINERARY_TEMPLATES.filter((item) => item.themeShort === filter);
   const days = applied ? [...new Set(applied.stops.map((stop) => stop.day))] : [];
+  const summaryLines = applied ? splitSummary(applied) : [];
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -98,6 +153,34 @@ export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: st
     return () => window.clearTimeout(timer);
   }, [notice]);
 
+  const mapKey = applied ? `${applied.id}:${applied.stops.length}` : "";
+  const mapLoading = Boolean(applied) && mapData?.key !== mapKey;
+  const mapPoints = mapData?.key === mapKey ? mapData.points : [];
+  const pointByName = new Map(mapPoints.map((point) => [point.name, point]));
+  // 地图展示整趟行程；时间轴仍按选中的第 N 天切换，图上的当天站点会高亮。
+  const missingPoints = mapData?.missing ?? [];
+
+  // 站名解析为真实坐标：服务端带 key 调高德，前端只拿坐标与本站图片地址。
+  useEffect(() => {
+    if (!applied) return;
+    const key = `${applied.id}:${applied.stops.length}`;
+    const controller = new AbortController();
+    fetch("/api/itinerary/map", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stops: applied.stops.map((stop) => ({ name: stop.name, day: stop.day })) }),
+      signal: controller.signal,
+    })
+      .then((response) => response.json())
+      .then((payload: MapPayload) => setMapData({ ...payload, key }))
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setMapData({ key, available: false, points: [], note: "地图解析失败，已回退示意图" });
+        }
+      });
+    return () => controller.abort();
+  }, [applied]);
+
   /** 套用模板并滚动到详情区。 */
   function apply(template: ItineraryTemplate) {
     setCustomPlan(null);
@@ -105,6 +188,15 @@ export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: st
     setActiveDay(1);
     setNotice("");
     window.setTimeout(() => detail.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  }
+
+  /** 从 AI／分享路线回到模板列表，清空定制结果并滚回筛选区。 */
+  function backToTemplates() {
+    setCustomPlan(null);
+    setAppliedId("");
+    setActiveDay(1);
+    setNotice("");
+    window.setTimeout(() => templates.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   }
 
   /** 调用 AI 路线推荐接口，按条件与历史偏好生成行程。 */
@@ -172,7 +264,7 @@ export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: st
           title: template.title,
           durationDays: template.durationDays,
           items: template.stops.map((stop, index) => ({
-            resourceId: `${template.id}-${index + 1}`,
+            resourceId: `plan:${template.id}-${index + 1}`,
             title: `第${stop.day}天 ${stop.name}`,
             day: stop.day,
           })),
@@ -188,16 +280,33 @@ export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: st
     }
   }
 
-  /** 复制带模板参数的可分享链接；AI 定制路线暂不生成链接。 */
+  /** 复制分享链接：AI 定制路线先存成快照，模板路线直接带 id。 */
   async function share(template: ItineraryTemplate) {
-    if (template.id.startsWith("ai-")) {
-      setNotice("AI 定制路线暂不支持分享链接，可先保存到「我的行程」。");
-      return;
+    if (sharing) return;
+    let url = `${window.location.origin}/plan?template=${encodeURIComponent(template.id)}`;
+
+    if (template.id.startsWith("ai-") || template.id.startsWith("shared-")) {
+      setSharing(true);
+      try {
+        const response = await fetch("/api/itinerary/share", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan: template }),
+        });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "创建分享链接失败");
+        url = `${window.location.origin}${payload.url}`;
+      } catch (error) {
+        setNotice(error instanceof Error ? error.message : "创建分享链接失败，请稍后重试");
+        setSharing(false);
+        return;
+      }
+      setSharing(false);
     }
-    const url = `${window.location.origin}/plan?template=${encodeURIComponent(template.id)}`;
+
     try {
       await navigator.clipboard.writeText(url);
-      setNotice("分享链接已复制，可直接发给同行人。");
+      setNotice("分享链接已复制，对方打开即可查看完整行程。");
     } catch {
       window.prompt("复制分享链接", url);
     }
@@ -224,15 +333,17 @@ export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: st
         <section className={s.hero}>
           <p className={s.kicker}>SMART ITINERARY · 智能行程规划</p>
           <h1>选一份福州行程，<em>一键出发</em></h1>
-          <p className={s.lead}>8 条主题套餐，覆盖登山、非遗、海丝、温泉、古厝、寺庙、海岛与红色研学；也可以按天数、人群和兴趣生成专属路线。</p>
+          <p className={s.lead}>8 条主题套餐，覆盖登山、非遗、海丝、温泉、古厝、寺庙、海岛与红色研学；也可以按天数、人群和兴趣生成专属路线，详情页会按站点自动解析真实坐标并生成地图路线。</p>
           <div className={s.heroMeta}>
             <span><Route size={15} />8 条套餐</span>
             <span><Sparkles size={15} />AI 定制</span>
-            <span><Map size={15} />路线图</span>
+            <span><MapIcon size={15} />高德地图路线</span>
             <span><Bookmark size={15} />保存与分享</span>
           </div>
-          <p className={s.sourceNote}><Info size={14} />模板整理自《资料11.xlsx》；时间为建议安排，开放时间、票价与交通以出行当天为准。</p>
+          <p className={s.sourceNote}><Info size={14} />时间为建议安排，开放时间、票价与交通以出行当天为准。</p>
         </section>
+
+        {shareError && <p className={s.shareError} role="alert"><Info size={15} />{shareError}</p>}
 
         <section className={s.aiPanel} aria-label="AI 路线智能推荐">
           <div className={s.aiPanelHead}>
@@ -279,16 +390,18 @@ export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: st
               </div>
             </div>
             <div className={s.aiFormFoot}>
-              <p><Users size={14} />未登录时只按上方条件生成；登录后会读取最近收藏与浏览记录作为偏好。</p>
-              <button type="submit" disabled={planning}>
+              <button className={s.generateButton} type="submit" disabled={planning}>
                 {planning ? <><LoaderCircle className={s.spinner} size={16} />{planStatus}</> : <><Sparkles size={16} />生成我的路线</>}
               </button>
+              <p><Users size={14} />未登录时只按上方条件生成；登录后会读取最近收藏与浏览记录作为偏好。</p>
             </div>
             {planError && <p className={s.planError} role="alert"><Info size={14} />{planError}</p>}
           </form>
         </section>
 
-        <section className={s.filterRow} aria-label="按主题筛选">
+        {!customPlan && (
+          <>
+        <section ref={templates} className={s.filterRow} aria-label="按主题筛选">
           <div className={s.filters}>
             {ITINERARY_THEMES.map((theme) => (
               <button key={theme} aria-pressed={filter === theme} onClick={() => setFilter(theme)}>{theme}</button>
@@ -303,31 +416,50 @@ export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: st
             const isApplied = appliedId === template.id;
             return (
               <article key={template.id} className={`${s.card} ${isApplied ? s.cardApplied : ""}`} style={accentStyle(template.accent)}>
-                <div className={s.cardTop}>
-                  <span className={s.themeIcon}><Icon size={21} /></span>
-                  <span className={s.themeName}>{template.theme}</span>
-                  <span className={s.duration}><CalendarDays size={12} />{template.durationLabel}</span>
+                <div className={s.cover}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={template.cover ?? FALLBACK_COVER} alt={`${template.title}封面`} loading="lazy" />
+                  <span className={s.coverTheme}><Icon size={13} />{template.themeShort}</span>
+                  <span className={s.coverDuration}><CalendarDays size={12} />{template.durationLabel}</span>
                 </div>
-                <h3>{template.title}</h3>
-                <p className={s.subtitle}>{template.subtitle}</p>
-                <p className={s.attractions}><MapPin size={14} />{template.attractions.slice(0, 3).join(" · ")}{template.attractions.length > 3 ? ` 等 ${template.attractions.length} 处` : ""}</p>
-                <div className={s.foodTags}>{template.food.slice(0, 4).map((food) => <span key={food}>{food}</span>)}</div>
-                <div className={s.cardFoot}>
-                  <span className={s.suitable}><Users size={13} />{template.suitable}</span>
-                  <button onClick={() => apply(template)} aria-pressed={isApplied}>
-                    {isApplied ? <><Check size={15} />已套用</> : <>一键套用<ArrowRight size={15} /></>}
-                  </button>
+                <div className={s.cardBody}>
+                  <h3>{template.title}</h3>
+                  <p className={s.subtitle}>{template.subtitle}</p>
+                  <p className={s.attractions}><MapPin size={14} />{template.attractions.slice(0, 3).join(" · ")}{template.attractions.length > 3 ? ` 等 ${template.attractions.length} 处` : ""}</p>
+                  <div className={s.foodTags}>{template.food.slice(0, 4).map((food) => <span key={food}>{food}</span>)}</div>
+                  <div className={s.cardFoot}>
+                    <span className={s.suitable}><Users size={13} />{template.suitable}</span>
+                    <button onClick={() => apply(template)} aria-pressed={isApplied}>
+                      {isApplied ? <><Check size={15} />已套用</> : <>一键套用<ArrowRight size={15} /></>}
+                    </button>
+                  </div>
                 </div>
               </article>
             );
           })}
         </section>
+          </>
+        )}
 
         {applied && (
           <section ref={detail} className={s.detail} style={accentStyle(applied.accent)} aria-label="已套用的行程">
+            {applied.cover && (
+              <div className={s.detailCover}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={applied.cover} alt={`${applied.title}封面`} />
+                <span className={s.detailCoverTag}><MapPin size={13} />{applied.highlight}</span>
+              </div>
+            )}
+            <div className={s.detailInner}>
             <header className={s.detailHead}>
               <div>
-                <p className={s.kicker}>{applied.id.startsWith("ai-") ? "AI 定制路线" : `已套用套餐 · ${applied.theme}`}</p>
+                <p className={s.kicker}>
+                  {applied.id.startsWith("shared-")
+                    ? "好友分享的行程"
+                    : applied.id.startsWith("ai-")
+                      ? "AI 定制路线"
+                      : `已套用套餐 · ${applied.theme}`}
+                </p>
                 <h2>{applied.title}</h2>
                 <p className={s.detailSub}>{applied.subtitle}</p>
                 <div className={s.detailTags}>
@@ -338,11 +470,18 @@ export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: st
                 </div>
               </div>
               <div className={s.detailActions}>
+                {customPlan && (
+                  <button className={s.backButton} onClick={backToTemplates}>
+                    <ArrowLeft size={15} />{customPlan.id.startsWith("shared-") ? "浏览套餐模板" : "返回模板套用"}
+                  </button>
+                )}
                 <button className={s.saveButton} onClick={() => save(applied)}
                   disabled={savingId === applied.id || (Boolean(saved[applied.id]) && Boolean(user))}>
                   <Bookmark size={15} />{savingId === applied.id ? "保存中…" : saved[applied.id] ? "已保存" : "保存到我的行程"}
                 </button>
-                <button className={s.shareButton} onClick={() => share(applied)}><Share2 size={15} />复制分享链接</button>
+                <button className={s.shareButton} onClick={() => share(applied)} disabled={sharing}>
+                  <Share2 size={15} />{sharing ? "生成分享中…" : "复制分享链接"}
+                </button>
                 <button className={s.closeButton} onClick={() => { setCustomPlan(null); setAppliedId(""); }} aria-label="关闭行程详情"><X size={17} /></button>
               </div>
             </header>
@@ -361,40 +500,96 @@ export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: st
                   </div>
                 </div>
                 <div className={s.timelineList}>
-                  {applied.stops.filter((stop) => stop.day === activeDay).map((stop, index) => (
-                    <article key={`${stop.day}-${stop.time}-${stop.name}`} className={s.stop}>
-                      <div className={s.stopTime}>{stop.time}</div>
-                      <div className={s.stopDot}><span>{index + 1}</span></div>
-                      <div className={s.stopBody}>
-                        <h4>{stop.name}</h4>
-                        <p>{stop.activity}</p>
-                        {stop.note && <small>{stop.note}</small>}
-                        <a href={amapUrl(stop.name)} target="_blank" rel="noopener noreferrer"><MapPin size={13} />在地图中查看</a>
-                      </div>
-                    </article>
-                  ))}
+                  {applied.stops.filter((stop) => stop.day === activeDay).map((stop, index) => {
+                    const point = pointByName.get(stop.name);
+                    return (
+                      <article key={`${stop.day}-${stop.time}-${stop.name}`} className={s.stop}>
+                        <div className={s.stopTime}>{stop.time}</div>
+                        <div className={s.stopDot}><span>{index + 1}</span></div>
+                        <div className={s.stopBody}>
+                          <h4>{stop.name}</h4>
+                          <p>{stop.activity}</p>
+                          {stop.note && <small>{stop.note}</small>}
+                          <a href={point?.markerUrl ?? amapUrl(stop.name)} target="_blank" rel="noopener noreferrer">
+                            <MapPin size={13} />{point ? "导航到这里" : "在地图中查看"}
+                          </a>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
                 <p className={s.timelineNote}><Info size={14} />时间与顺序为模板建议，请按当天开放、交通和体力情况调整。</p>
               </div>
 
               <aside className={s.side}>
                 <div className={s.mapCard}>
-                  <div className={s.mapHead}><Compass size={16} />行程路线图<span>示意图</span></div>
-                  <div className={s.mapCanvas}>
-                    <span className={s.mapWatermark}>福州</span>
-                    <svg className={s.mapPath} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                      <polyline points={applied.map.map((stop) => `${stop.x},${stop.y}`).join(" ")}
-                        fill="none" stroke="var(--accent)" strokeWidth="0.7" strokeDasharray="2 1.6" strokeLinecap="round" />
-                    </svg>
-                    {applied.map.map((stop, index) => (
-                      <a key={`${stop.name}-${index}`} className={s.mapStop} href={amapUrl(stop.name)}
-                        target="_blank" rel="noopener noreferrer" style={{ left: `${stop.x}%`, top: `${stop.y}%` }}
-                        title={`在高德地图中查看 ${stop.name}`}>
-                        <span>{index + 1}</span><b>{stop.name}</b>
-                      </a>
-                    ))}
+                  <div className={s.mapHead}>
+                    <Compass size={16} />行程路线图
+                    <span>{mapData?.available ? "全程" : "示意图"}</span>
                   </div>
-                  <p>点击站点可在高德地图中查看位置；示意图不代表实际地理比例。{applied.stops.length > applied.map.length ? "路线图仅展示前 8 个主要站点。" : ""}</p>
+
+                  {mapLoading ? (
+                    <div className={s.mapLoading}><LoaderCircle className={s.spinner} size={18} />正在解析站点坐标…</div>
+                  ) : mapData?.available && mapData.imageUrl ? (
+                    <>
+                      <div className={s.mapFrame}>
+                        {/* 地图由本站代理生成，原生 img 可避免图片优化器二次请求 */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={mapData.imageUrl} alt={`${applied.title} 全程路线地图`} />
+                        <div className={s.mapPins}>
+                          {mapPoints.map((point) => (
+                            <a key={`${point.order}-${point.name}`} className={s.mapPin} href={point.markerUrl}
+                              target="_blank" rel="noopener noreferrer"
+                              style={{
+                                left: `${point.x}%`, top: `${point.y}%`, background: point.color,
+                                opacity: point.day === activeDay ? 1 : 0.45,
+                              }}
+                              title={`第${point.day}天 · ${point.name}`}>
+                              {point.order}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                      <div className={s.mapLegend}>
+                        {mapPoints.map((point) => (
+                          <a key={`legend-${point.order}-${point.name}`} href={point.markerUrl} target="_blank" rel="noopener noreferrer">
+                            <i style={{ background: point.color }}>{point.order}</i>{point.name}
+                          </a>
+                        ))}
+                      </div>
+                      <div className={s.mapMeta}>
+                        <span>{mapData.distanceKm ? `全程约 ${(mapData.distanceKm / 1000).toFixed(1)} 公里` : "已解析站点坐标"}</span>
+                        {mapData.navigationUrl && (
+                          <a href={mapData.navigationUrl} target="_blank" rel="noopener noreferrer"
+                            title="高德只支持两点导航，这里打开首站到末站的驾车路线">
+                            高德导航（首站→末站）<ArrowRight size={12} />
+                          </a>
+                        )}
+                      </div>
+                      <p>{missingPoints.length
+                        ? `共 ${missingPoints.length} 个站点未能定位（${missingPoints.map((item) => item.name).join("、")}），已在地图上跳过。`
+                        : `编号与时间轴顺序一致；地图只标注站点位置，点编号可单独导航。`}</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className={s.mapCanvas}>
+                        <span className={s.mapWatermark}>福州</span>
+                        <svg className={s.mapPath} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                          <polyline points={(applied.map ?? []).map((stop) => `${stop.x},${stop.y}`).join(" ")}
+                            fill="none" stroke="var(--accent)" strokeWidth="0.7" strokeDasharray="2 1.6" strokeLinecap="round" />
+                        </svg>
+                        {(applied.map ?? []).map((stop, index) => (
+                          <a key={`${stop.name}-${index}`} className={s.mapStop} href={amapUrl(stop.name)}
+                            target="_blank" rel="noopener noreferrer" style={{ left: `${stop.x}%`, top: `${stop.y}%` }}
+                            title={`在高德地图中查看 ${stop.name}`}>
+                            <span>{index + 1}</span><b>{stop.name}</b>
+                          </a>
+                        ))}
+                      </div>
+                      <p>{mapData?.note || "暂未解析到坐标，以下为示意图；点击站点可在高德地图中搜索位置。"}
+                        {applied.stops.length > (applied.map ?? []).length ? " 路线图仅展示前 8 个主要站点。" : ""}</p>
+                    </>
+                  )}
                 </div>
 
                 <div className={s.infoCard}>
@@ -411,21 +606,20 @@ export function ItineraryPlanner({ initialTemplateId }: { initialTemplateId?: st
                 </div>
                 <div className={s.infoCard}>
                   <h3><Route size={16} />路线摘要</h3>
-                  <p>{applied.routeSummary}</p>
+                  <div className={s.summaryList}>
+                    {summaryLines.map((line, index) => (
+                      <p key={`${line.day}-${index}`}>
+                        {line.day > 0 && <b>Day {line.day}</b>}
+                        <span>{line.text}</span>
+                      </p>
+                    ))}
+                  </div>
                 </div>
               </aside>
             </div>
+            </div>
           </section>
         )}
-
-        <section className={s.aiCta}>
-          <div>
-            <p className={s.kicker}>NEED A CUSTOM PLAN</p>
-            <h2>想按人数、天数和节奏再调整？</h2>
-            <p>带着喜欢的模板去 AI 文化问答，继续问路线、交通和适老化安排。</p>
-          </div>
-          <Link href="/ask">去 AI 文化问答<ArrowRight size={16} /></Link>
-        </section>
       </main>
     </div>
   );
