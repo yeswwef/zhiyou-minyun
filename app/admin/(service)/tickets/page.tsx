@@ -107,19 +107,19 @@ export default function AdminTicketsPage() {
   return (
     <div className="admin-page">
       <div className="admin-page-head">
-        <div><p>PLATFORM TICKETING</p><h1>票务与场馆管理</h1><span>统一维护场馆、预约项目、开放时段和承载容量。</span></div>
+        <div><p>VENUE &amp; TICKETING</p><h1>场馆与票务</h1><span>作为平台服务模块，统一维护场馆、票务项目、开放时段和承载容量。</span></div>
         {message && <div className="admin-date text-[#a53d31]"><TicketCheck size={16}/>{message}</div>}
       </div>
 
       <div className="mb-5 grid gap-3 sm:grid-cols-3">
-        <div className="admin-panel flex items-center gap-4 py-4"><i className="grid h-10 w-10 place-items-center rounded-xl bg-[#edf3e9] text-[#5d7654]"><Building2 size={20}/></i><span><small className="block text-[10px] text-[#938b82]">已接入场馆</small><b className="text-xl">{venues.length}</b></span></div>
-        <div className="admin-panel flex items-center gap-4 py-4"><i className="grid h-10 w-10 place-items-center rounded-xl bg-[#faece8] text-[#b84434]"><CalendarDays size={20}/></i><span><small className="block text-[10px] text-[#938b82]">开放时段</small><b className="text-xl">{totals.slots}</b></span></div>
-        <div className="admin-panel flex items-center gap-4 py-4"><i className="grid h-10 w-10 place-items-center rounded-xl bg-[#e9f1ef] text-[#315f58]"><Users size={20}/></i><span><small className="block text-[10px] text-[#938b82]">预约承载</small><b className="text-xl">{totals.booked}<em className="ml-1 text-xs not-italic font-normal text-[#938b82]">/ {totals.capacity} 人</em></b></span></div>
+        <div className="admin-panel flex items-center gap-4 py-4"><i className="grid h-10 w-10 place-items-center rounded-xl bg-[#edf3e9] text-[#5d7654]"><Building2 size={20}/></i><span><small className="block text-[11px] text-[#938b82]">已接入场馆</small><b className="text-xl">{venues.length}</b></span></div>
+        <div className="admin-panel flex items-center gap-4 py-4"><i className="grid h-10 w-10 place-items-center rounded-xl bg-[#faece8] text-[#b84434]"><CalendarDays size={20}/></i><span><small className="block text-[11px] text-[#938b82]">开放时段</small><b className="text-xl">{totals.slots}</b></span></div>
+        <div className="admin-panel flex items-center gap-4 py-4"><i className="grid h-10 w-10 place-items-center rounded-xl bg-[#e9f1ef] text-[#315f58]"><Users size={20}/></i><span><small className="block text-[11px] text-[#938b82]">预约承载</small><b className="text-xl">{totals.booked}<em className="ml-1 text-xs not-italic font-normal text-[#938b82]">/ {totals.capacity} 人</em></b></span></div>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-2">
         <form onSubmit={addVenue} className="admin-panel">
-          <div className="admin-panel-heading"><div><p>VENUE PROFILE</p><h2 className="flex items-center gap-2"><Building2 size={18}/>新建场馆</h2></div><span className="text-[10px] text-[#9b938a]">第一步</span></div>
+          <div className="admin-panel-heading"><div><p>VENUE PROFILE</p><h2 className="flex items-center gap-2"><Building2 size={18}/>新建场馆</h2></div><span className="text-[11px] text-[#9b938a]">第一步</span></div>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="admin-form-label">场馆名称<input className={input} name="name" required placeholder="如：三坊七巷历史文化街区"/></label>
             <label className="admin-form-label">场馆类型<select className={input} name="type"><option value="SCENIC">景区</option><option value="MUSEUM">博物馆</option><option value="PERFORMANCE">演出场馆</option></select></label>
@@ -128,11 +128,11 @@ export default function AdminTicketsPage() {
             <label className="admin-form-label">封面图片<input className={input} name="image" placeholder="图片 URL（选填）"/></label>
           </div>
           <button className="admin-submit dark"><Plus size={16}/>创建场馆</button>
-          <div className="mt-5 flex flex-wrap gap-2 border-t border-[#eee5da] pt-4">{venues.map((venue) => <span key={venue.id} className="rounded-full bg-[#f4efe8] px-3 py-1.5 text-[10px] text-[#686159]"><MapPin size={11} className="mr-1 inline"/>{venue.name} · {typeLabels[venue.type]} · {venue._count.tickets} 项</span>)}</div>
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-[#eee5da] pt-4">{venues.map((venue) => <span key={venue.id} className="rounded-full bg-[#f4efe8] px-3 py-1.5 text-[11px] text-[#686159]"><MapPin size={11} className="mr-1 inline"/>{venue.name} · {typeLabels[venue.type]} · {venue._count.tickets} 项</span>)}</div>
         </form>
 
         <form onSubmit={addTicket} className="admin-panel">
-          <div className="admin-panel-heading"><div><p>TICKET PROJECT</p><h2 className="flex items-center gap-2"><CalendarPlus size={18}/>新建票务项目</h2></div><span className="text-[10px] text-[#9b938a]">第二步</span></div>
+          <div className="admin-panel-heading"><div><p>TICKET PROJECT</p><h2 className="flex items-center gap-2"><CalendarPlus size={18}/>新建票务项目</h2></div><span className="text-[11px] text-[#9b938a]">第二步</span></div>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="admin-form-label">所属场馆<select className={input} name="venueId" required><option value="">请选择场馆</option>{venues.map((venue) => <option key={venue.id} value={venue.id}>{venue.name}</option>)}</select></label>
             <label className="admin-form-label">初始状态<select className={input} name="status"><option value="OPEN">直接开放</option><option value="DRAFT">保存草稿</option></select></label>
@@ -145,19 +145,19 @@ export default function AdminTicketsPage() {
         </form>
       </div>
 
-      <div className="mt-8 mb-4"><p className="text-[9px] font-bold tracking-[2px] text-[#b84434]">PROJECT & TIME SLOT</p><h2 className="mt-1 font-serif text-2xl">票务项目与分时时段</h2></div>
+      <div className="mt-8 mb-4"><p className="text-[9.9px] font-bold tracking-[2px] text-[#b84434]">PROJECT & TIME SLOT</p><h2 className="mt-1 font-serif text-2xl">票务项目与分时时段</h2></div>
       <div className="space-y-4">
         {tickets.map((ticket) => {
           const capacity = ticket.slots.reduce((sum, slot) => sum + slot.capacity, 0);
           const booked = ticket.slots.reduce((sum, slot) => sum + slot.bookedCount, 0);
           return <article key={ticket.id} className="admin-panel overflow-hidden p-0">
             <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#eee5da] px-5 py-5">
-              <div><div className="flex items-center gap-2"><h3 className="font-serif text-lg font-semibold">{ticket.title}</h3><span className={`rounded px-2 py-1 text-[9px] font-semibold ${ticket.status === "OPEN" ? "bg-[#e9f3eb] text-[#4f7c5b]" : "bg-[#f6eee2] text-[#9b6e37]"}`}>{ticket.status === "OPEN" ? "开放预约" : "暂停开放"}</span></div><p className="mt-2 text-[11px] text-[#8e867d]">{ticket.venue.name} · {ticket.summary}</p><p className="mt-3 text-[10px] text-[#a29a91]">{ticket.slots.length} 个时段 · 已预约 {booked} / {capacity} 人</p></div>
-              <button onClick={() => toggle(ticket)} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#ddd2c6] bg-[#fffdfa] px-3 text-[10px] text-[#625c55]">{ticket.status === "OPEN" ? <><CirclePause size={15}/>暂停开放</> : <><CirclePlay size={15}/>开放预约</>}</button>
+              <div><div className="flex items-center gap-2"><h3 className="font-serif text-lg font-semibold">{ticket.title}</h3><span className={`rounded px-2 py-1 text-[9.9px] font-semibold ${ticket.status === "OPEN" ? "bg-[#e9f3eb] text-[#4f7c5b]" : "bg-[#f6eee2] text-[#9b6e37]"}`}>{ticket.status === "OPEN" ? "开放预约" : "暂停开放"}</span></div><p className="mt-2 text-[12.1px] text-[#8e867d]">{ticket.venue.name} · {ticket.summary}</p><p className="mt-3 text-[11px] text-[#a29a91]">{ticket.slots.length} 个时段 · 已预约 {booked} / {capacity} 人</p></div>
+              <button onClick={() => toggle(ticket)} className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#ddd2c6] bg-[#fffdfa] px-3 text-[11px] text-[#625c55]">{ticket.status === "OPEN" ? <><CirclePause size={15}/>暂停开放</> : <><CirclePlay size={15}/>开放预约</>}</button>
             </div>
             <div className="grid gap-3 bg-[#fbf8f3] px-5 py-4 md:grid-cols-2 xl:grid-cols-4">{ticket.slots.map((slot) => {
               const rate = slot.capacity ? Math.round(slot.bookedCount / slot.capacity * 100) : 0;
-              return <div key={slot.id} className="rounded-xl border border-[#e9dfd4] bg-[#fffdfa] p-3"><b className="text-[11px]">{new Date(slot.startAt).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</b><p className="mt-2 text-[9px] text-[#928980]">容量 {slot.capacity} · 已约 {slot.bookedCount} · 剩余 {slot.remaining}</p><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#eee8df]"><span className="block h-full rounded-full bg-[#b84434]" style={{ width: `${Math.min(100, rate)}%` }}/></div></div>})}</div>
+              return <div key={slot.id} className="rounded-xl border border-[#e9dfd4] bg-[#fffdfa] p-3"><b className="text-[12.1px]">{new Date(slot.startAt).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })}</b><p className="mt-2 text-[9.9px] text-[#928980]">容量 {slot.capacity} · 已约 {slot.bookedCount} · 剩余 {slot.remaining}</p><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#eee8df]"><span className="block h-full rounded-full bg-[#b84434]" style={{ width: `${Math.min(100, rate)}%` }}/></div></div>})}</div>
             <form onSubmit={(event) => addSlot(event, ticket.id)} className="flex flex-wrap items-end gap-3 border-t border-[#eee5da] px-5 py-4">
               <label className="admin-form-label">开始时间<input name="startAt" type="datetime-local" required className={`mt-1 ${input}`}/></label>
               <label className="admin-form-label">结束时间<input name="endAt" type="datetime-local" required className={`mt-1 ${input}`}/></label>

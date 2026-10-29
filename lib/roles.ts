@@ -51,9 +51,28 @@ export async function guardAdmin(): Promise<GuardResult> {
   if (!userId) {
     return { ok: false, response: NextResponse.json({ ok: false, error: "请先登录管理员账号" }, { status: 401 }) };
   }
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
-  if (user?.role !== "ADMIN") {
-    return { ok: false, response: NextResponse.json({ ok: false, error: "无管理员权限" }, { status: 403 }) };
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, disabledAt: true } });
+  if (!user || user.disabledAt) {
+    return { ok: false, response: NextResponse.json({ ok: false, error: "账号不可用，请重新登录" }, { status: 401 }) };
+  }
+  if (user.role !== "ADMIN") {
+    return { ok: false, response: NextResponse.json({ ok: false, error: "无平台管理员权限" }, { status: 403 }) };
+  }
+  return { ok: true, userId };
+}
+
+/** 景点管理员守卫：只允许 TICKET_ADMIN 维护场馆、票务、预约核销与应急工单。 */
+export async function guardTicketAdmin(): Promise<GuardResult> {
+  const userId = await getSessionUserId();
+  if (!userId) {
+    return { ok: false, response: NextResponse.json({ ok: false, error: "请先登录景点管理员账号" }, { status: 401 }) };
+  }
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, disabledAt: true } });
+  if (!user || user.disabledAt) {
+    return { ok: false, response: NextResponse.json({ ok: false, error: "账号不可用，请重新登录" }, { status: 401 }) };
+  }
+  if (user.role !== "TICKET_ADMIN") {
+    return { ok: false, response: NextResponse.json({ ok: false, error: "无景点管理员权限" }, { status: 403 }) };
   }
   return { ok: true, userId };
 }

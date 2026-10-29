@@ -27,10 +27,15 @@ export type ItineraryTemplate = {
   food: string[];
   transport: string;
   stops: ItineraryStop[];
-  map: ItineraryMapStop[];
+  /** 示意图坐标；AI 定制与分享路线可能没有，前端会回退到真实地图或空图。 */
+  map?: ItineraryMapStop[];
   accent: string;
+  /** 套餐封面图；本地没有实拍的主题用生成图补齐。 */
+  cover?: string;
   note?: string;
 };
+
+/** 本地实拍封面：public/images 为站点原有素材，public/images/itinerary 为补充的主题实拍（Wikimedia Commons，CC BY-SA / CC BY）。 */
 
 export const ITINERARY_TEMPLATES: ItineraryTemplate[] = [
   {
@@ -39,6 +44,7 @@ export const ITINERARY_TEMPLATES: ItineraryTemplate[] = [
     themeShort: "登山",
     title: "鼓山登高 · 鼓岭云海一日",
     subtitle: "登山古道、涌泉寺与鼓岭云海",
+    cover: "/images/gushan.jpg",
     durationDays: 1,
     durationLabel: "1 天",
     suitable: "体力较好、喜欢徒步与山野",
@@ -79,6 +85,7 @@ export const ITINERARY_TEMPLATES: ItineraryTemplate[] = [
     themeShort: "非遗",
     title: "坊巷非遗 · 闽剧一夜",
     subtitle: "三坊七巷、上下杭手作与闽剧演出",
+    cover: "/images/sanfangqixiang.jpg",
     durationDays: 1,
     durationLabel: "1 天",
     suitable: "喜欢手作、戏曲与老城慢游",
@@ -112,6 +119,7 @@ export const ITINERARY_TEMPLATES: ItineraryTemplate[] = [
     themeShort: "海丝",
     title: "海丝寻踪 · 船政与万国建筑",
     subtitle: "烟台山、马尾船政与闽安古镇",
+    cover: "/images/yantaishan.jpg",
     durationDays: 1,
     durationLabel: "1 天",
     suitable: "喜欢近代史、建筑与江海文化",
@@ -143,6 +151,7 @@ export const ITINERARY_TEMPLATES: ItineraryTemplate[] = [
     themeShort: "温泉",
     title: "温泉之城 · 泡汤慢生活",
     subtitle: "温泉博物馆、温泉公园与泡汤体验",
+    cover: "/images/itinerary/hotspring.jpg",
     durationDays: 1,
     durationLabel: "1 天",
     suitable: "亲子、长辈同行或想放慢节奏",
@@ -174,6 +183,7 @@ export const ITINERARY_TEMPLATES: ItineraryTemplate[] = [
     themeShort: "古厝",
     title: "古厝漫游 · 闽江夜色",
     subtitle: "三坊七巷、上下杭与烟台山夜景",
+    cover: "/images/shangxiahang.jpg",
     durationDays: 1,
     durationLabel: "1 天",
     suitable: "第一次来福州、喜欢老街与夜景",
@@ -205,6 +215,7 @@ export const ITINERARY_TEMPLATES: ItineraryTemplate[] = [
     themeShort: "寺庙",
     title: "古刹听钟 · 福州寺庙一日",
     subtitle: "开元寺、西禅寺与鼓山涌泉寺",
+    cover: "/images/itinerary/temple.jpg",
     durationDays: 1,
     durationLabel: "1 天",
     suitable: "喜欢古建筑、宗教文化与清静空间",
@@ -236,6 +247,7 @@ export const ITINERARY_TEMPLATES: ItineraryTemplate[] = [
     themeShort: "海岛",
     title: "平潭蓝眼泪 · 海岛两日",
     subtitle: "北港村、坛南湾与环岛骑行",
+    cover: "/images/itinerary/island.jpg",
     durationDays: 2,
     durationLabel: "2 天",
     suitable: "亲子、朋友结伴与海岛度假",
@@ -269,6 +281,7 @@ export const ITINERARY_TEMPLATES: ItineraryTemplate[] = [
     themeShort: "红色",
     title: "红色福州 · 两日研学",
     subtitle: "西湖、永阳文化中心与红色旧址",
+    cover: "/images/itinerary/red.jpg",
     durationDays: 2,
     durationLabel: "2 天",
     suitable: "研学团队、亲子红色教育",
@@ -298,9 +311,117 @@ export const ITINERARY_TEMPLATES: ItineraryTemplate[] = [
     accent: "#a83c32",
     note: "原资料未提供本线路的路线、美食和交通信息；以上为按区域整理的参考安排，场馆开放与团队预约需提前核实。",
   },
+  {
+    id: "forest-park-hike",
+    theme: "徒步或登山路线",
+    themeShort: "登山",
+    title: "森林公园环线 · 古道与瀑布徒步",
+    subtitle: "天马岭古道、宋古驿道与龙潭瀑布环线",
+    cover: "/images/gushan.jpg",
+    durationDays: 1,
+    durationLabel: "1 天",
+    suitable: "体力较好、喜欢森林徒步与瀑布溪谷",
+    highlight: "天马岭古道 · 宋古驿道 · 龙潭瀑布 · 荔园登山道",
+    routeSummary: "地铁1号线树兜站 → 72路公交至森林公园站 → 东门入园 → 天马岭古道 → 宋古驿道 → 龙潭瀑布 → 荔园登山道 → 回到东门",
+    attractions: ["福州国家森林公园", "天马岭古道", "宋古驿道", "龙潭瀑布", "荔园登山道"],
+    food: ["自带吃食", "饮用水", "能量补给"],
+    transport: "地铁1号线到树兜站，出站后步行到对面公交站换乘72路，坐到“森林公园站”；园内为环线步行。",
+    stops: [
+      { day: 1, time: "08:00", name: "地铁1号线树兜站", activity: "集合出发，出站后到对面公交站换乘72路。" },
+      { day: 1, time: "08:40", name: "森林公园站", activity: "下车后走向东门，入园前做简单热身。" },
+      { day: 1, time: "09:20", name: "天马岭古道", activity: "沿古道徒步上行，林荫较多，注意脚下石块。" },
+      { day: 1, time: "10:30", name: "宋古驿道", activity: "接宋古驿道继续前行，坡度相对平缓。" },
+      { day: 1, time: "11:30", name: "龙潭瀑布", activity: "在瀑布边休息并吃自带午餐，补充体力。" },
+      { day: 1, time: "13:00", name: "荔园登山道", activity: "沿登山道继续环线，台阶较多，按体力控制节奏。", note: "体力不足可原路折返东门。" },
+      { day: 1, time: "15:00", name: "回到东门", activity: "环线结束，从东门出园，乘72路返回市区。" },
+    ],
+    map: [
+      { name: "树兜站", x: 22, y: 74 },
+      { name: "东门", x: 36, y: 64 },
+      { name: "天马岭古道", x: 48, y: 56 },
+      { name: "宋古驿道", x: 58, y: 48 },
+      { name: "龙潭瀑布", x: 70, y: 40 },
+      { name: "荔园登山道", x: 62, y: 28 },
+      { name: "返程", x: 34, y: 30 },
+    ],
+    accent: "#2f6b3f",
+    note: "园内餐饮点少，建议自带吃食和足量饮水；古道雨后湿滑、夏季蚊虫多，注意防滑防蚊并预留返程时间。",
+  },
+  {
+    id: "shoushan-stone",
+    theme: "非遗体验路线",
+    themeShort: "非遗",
+    title: "寿山石之乡 · 石馆与古矿洞一日",
+    subtitle: "三层展馆、古矿洞探险与免费淘石",
+    cover: "/images/resources/shoushan.jpg",
+    durationDays: 1,
+    durationLabel: "1 天",
+    suitable: "喜欢工艺美术、非遗技艺与亲子研学",
+    highlight: "中国寿山石馆 · 寿山石古矿洞 · 免费淘石",
+    routeSummary: "102路或54路至福飞北路 → 换乘北峰专线巴士至中国寿山石馆站 → 三层展馆 → 寿山石古矿洞（收费）→ 免费矿洞探险与淘石 → 返程",
+    attractions: ["中国寿山石馆", "寿山石古矿洞", "寿山村"],
+    food: ["自带吃食", "村内简餐"],
+    transport: "市区乘102路或54路至福飞北路，换乘“晋朝客运北峰专线”巴士到“中国寿山石馆”站下车；巴士约一小时一班，可提前联系司机确认班次；也可走高速自驾前往。",
+    stops: [
+      { day: 1, time: "08:00", name: "市区出发", activity: "乘102路或54路公交前往福飞北路。" },
+      { day: 1, time: "09:00", name: "福飞北路换乘", activity: "换乘北峰专线巴士前往寿山村，车程较长。" },
+      { day: 1, time: "10:00", name: "中国寿山石馆", activity: "参观三层展馆，了解寿山石开采、石种与雕刻技艺。" },
+      { day: 1, time: "12:00", name: "午餐", activity: "自带吃食，或在村内简单用餐。" },
+      { day: 1, time: "13:30", name: "寿山石古矿洞", activity: "参观收费矿洞，了解历代采矿方式。", note: "门票与开放情况以现场为准。" },
+      { day: 1, time: "15:00", name: "矿洞探险与淘石", activity: "参加免费矿洞探险，体验免费淘石。" },
+      { day: 1, time: "16:30", name: "返程", activity: "乘巴士或自驾返回市区，注意末班时间。" },
+    ],
+    map: [
+      { name: "市区", x: 20, y: 78 },
+      { name: "福飞北路", x: 32, y: 66 },
+      { name: "寿山石馆", x: 54, y: 52 },
+      { name: "午餐", x: 62, y: 44 },
+      { name: "古矿洞", x: 72, y: 36 },
+      { name: "返程", x: 46, y: 28 },
+    ],
+    accent: "#a4653c",
+    note: "北峰专线班次较少（约一小时一班），返程时间请提前与司机确认；古矿洞收费，免费项目为矿洞探险与淘石。",
+  },
+  {
+    id: "houguan",
+    theme: "海上丝绸之路路线",
+    themeShort: "海丝",
+    title: "侯官古村 · 闽江落日海丝线",
+    subtitle: "侯官驿站、城隍庙、古街与江边日落",
+    cover: "/images/yantaishan.jpg",
+    durationDays: 1,
+    durationLabel: "1 天",
+    suitable: "喜欢古村人文、江畔日落与慢节奏",
+    highlight: "侯官驿站 · 城隍庙 · 镇国宝塔 · 侯官古街",
+    routeSummary: "地铁2号线上街站B口 → 红峰公交站换乘大学城2号环线至侯官村站 → 侯官驿站 → 侯官城隍庙 → 五水公园（镇国宝塔、螺女庙）→ 侯官古街 → 侯官公园看日落",
+    attractions: ["侯官文化旅游区", "侯官驿站", "侯官城隍庙", "五水公园", "镇国宝塔", "螺女庙", "侯官古街", "侯官公园"],
+    food: ["自带吃食", "景区简餐"],
+    transport: "地铁2号线坐到上街站，从B口出站后到旁边红峰公交站换乘大学城2号环线至“侯官村站”；也可从B口出来直接打车前往。",
+    stops: [
+      { day: 1, time: "13:30", name: "地铁2号线上街站B口", activity: "出站后到红峰公交站换乘，或直接打车前往侯官村。" },
+      { day: 1, time: "14:00", name: "侯官驿站", activity: "了解侯官文化的历史脉络。" },
+      { day: 1, time: "14:40", name: "侯官城隍庙", activity: "参观古庙建筑与当地民俗。" },
+      { day: 1, time: "15:20", name: "五水公园", activity: "看镇国宝塔与螺女庙，沿江散步。" },
+      { day: 1, time: "16:30", name: "侯官古街", activity: "逛古街老宅，途中解决吃食。" },
+      { day: 1, time: "17:30", name: "侯官公园", activity: "在江边等日落，按季节调整时间。" },
+      { day: 1, time: "18:30", name: "返程", activity: "乘公交或打车返回上街站。" },
+    ],
+    map: [
+      { name: "上街站", x: 22, y: 70 },
+      { name: "侯官驿站", x: 36, y: 60 },
+      { name: "城隍庙", x: 48, y: 54 },
+      { name: "五水公园", x: 58, y: 46 },
+      { name: "侯官古街", x: 66, y: 38 },
+      { name: "侯官公园", x: 74, y: 30 },
+      { name: "返程", x: 40, y: 26 },
+    ],
+    accent: "#356b7a",
+    note: "侯官古街附近餐饮选择较少，建议自带吃食或在景区解决；日落时间随季节变化，返程请预留交通时间。",
+  },
 ];
 
-export const ITINERARY_THEMES = ["全部", ...ITINERARY_TEMPLATES.map((template) => template.themeShort)];
+/** 主题标签按模板出现顺序去重，同一主题的多条路线只占一个筛选标签。 */
+export const ITINERARY_THEMES = ["全部", ...new Set(ITINERARY_TEMPLATES.map((template) => template.themeShort))];
 
 export function getItineraryTemplate(id: string | undefined) {
   return ITINERARY_TEMPLATES.find((template) => template.id === id);

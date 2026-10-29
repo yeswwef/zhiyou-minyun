@@ -6,7 +6,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   AlertCircle, ArrowLeft, BatteryCharging, CheckCircle2, ChevronDown, Cloud, CloudRain, Hospital,
   LoaderCircle, LocateFixed, Map, MapPin, Navigation, ParkingCircle, Phone, RefreshCw, ShieldCheck, Sun, Toilet, X,
@@ -69,8 +69,6 @@ export function HelpExperience() {
   const [ticket, setTicket] = useState<EmergencyResponse | null>(null);
   const [submitError, setSubmitError] = useState("");
 
-  const inFlight = useRef(false);
-
   /** 请求浏览器定位；失败时退回三坊七巷并提示用户。 */
   const locate = useCallback(() => {
     if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -123,42 +121,42 @@ export function HelpExperience() {
     return () => { alive = false; };
   }, []);
 
-  // 类型或坐标变化时重新查询设施。
+  // 类型或坐标变化时重新查询设施；旧请求直接 abort，避免竞态让 loading 永久停住。
   useEffect(() => {
-    let alive = true;
+    const controller = new AbortController();
     const run = async () => {
-      if (inFlight.current) return;
-      inFlight.current = true;
       setLoading(true);
       setError("");
       setNote("");
+      const query = new URLSearchParams({
+        type,
+        lat: String(coords.lat),
+        lng: String(coords.lng),
+        radius: "2000",
+      });
       try {
-        const query = new URLSearchParams({
-          type,
-          lat: String(coords.lat),
-          lng: String(coords.lng),
-          radius: "2000",
+        const response = await fetch(`/api/help/facilities?${query.toString()}`, {
+          cache: "no-store",
+          signal: controller.signal,
         });
-        const response = await fetch(`/api/help/facilities?${query.toString()}`, { cache: "no-store" });
         const data = await response.json() as {
           source?: FacilitySource; items?: Facility[]; note?: string; error?: string;
         };
         if (!response.ok) throw new Error(data.error || "设施查询失败");
-        if (!alive) return;
+        if (controller.signal.aborted) return;
         setItems(data.items ?? []);
         setSource(data.source ?? "seed");
         setNote(data.note ?? "");
       } catch (reason) {
-        if (!alive) return;
+        if (controller.signal.aborted) return;
         setItems([]);
         setError(reason instanceof Error ? reason.message : "设施查询失败，请稍后重试");
       } finally {
-        if (alive) setLoading(false);
-        inFlight.current = false;
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
     void run();
-    return () => { alive = false; };
+    return () => controller.abort();
   }, [type, coords.lat, coords.lng]);
 
   // 选中地图点位时，让对应列表卡片进入可视区域。

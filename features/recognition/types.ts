@@ -1,6 +1,6 @@
 /**
  * @module-note features/recognition/types.ts
- * AI 多模态识景：图片识别结果、带来源讲解与请求返回契约。
+ * AI 图片识景：图片识别结果、带来源讲解与请求返回契约。
  */
 import type { Citation, WebSource } from "@/features/rag/types";
 

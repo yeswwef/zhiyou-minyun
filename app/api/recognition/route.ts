@@ -1,6 +1,6 @@
 /**
  * @module-note app/api/recognition/route.ts
- * AI 多模态识景接口：接收照片 Data URL，返回识别对象与带来源的历史、非遗讲解。
+ * AI 图片识景接口：接收照片 Data URL，返回识别对象与带来源的历史、非遗讲解。
  */
 import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";

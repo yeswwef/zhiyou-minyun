@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MessageCircle } from "lucide-react";
+import { AnswerContent } from "@/features/ai-chat/AnswerContent";
 
 type Session = {
   id: string;
@@ -15,6 +16,33 @@ type Session = {
   messageCount: number;
 };
 type Message = { role: string; content: string; createdAt: string };
+
+/** 数据库里 AI 回复存的是结构化 JSON，历史页只取正文，丢掉标题与说明。 */
+type StoredAnswer = {
+  intro?: string;
+  sections?: { title?: string; text?: string }[];
+};
+
+function parseAnswer(content: string): StoredAnswer | null {
+  if (!content.trim().startsWith("{")) return null;
+  try {
+    const data = JSON.parse(content) as StoredAnswer;
+    if (data && typeof data === "object" && (typeof data.intro === "string" || Array.isArray(data.sections))) return data;
+  } catch { /* 旧记录或纯文本回复按原文展示 */ }
+  return null;
+}
+
+/** 只渲染问答正文，不展示“根据本地知识库回答”“资料说明 1”等包装信息。 */
+function StoredAnswerView({ data }: { data: StoredAnswer }) {
+  const sections = Array.isArray(data.sections) ? data.sections : [];
+  const body = sections
+    .map((section) => (typeof section.text === "string" ? section.text.trim() : ""))
+    .filter(Boolean)
+    .join("\n\n");
+  const text = body || (typeof data.intro === "string" ? data.intro.trim() : "");
+  if (!text) return null;
+  return <AnswerContent text={text} className="chat-answer-text" />;
+}
 
 /**
  * 渲染游客端／用户中心／问答历史界面及其子组件。
@@ -97,17 +125,24 @@ export default function HistoryPage() {
                     {loadingMessages ? (
                       <div className="profile-empty">加载中……</div>
                     ) : messages.length ? (
-                      messages.map((message, index) => (
-                        <div
-                          className={`chat-bubble ${message.role === "user" ? "user" : "assistant"}`}
-                          key={index}
-                        >
-                          <span className="chat-role">
-                            {message.role === "user" ? "我" : "AI"}
-                          </span>
-                          <p>{message.content}</p>
-                        </div>
-                      ))
+                      messages.map((message, index) => {
+                        const parsed = message.role === "assistant" ? parseAnswer(message.content) : null;
+                        return (
+                          <div
+                            className={`chat-bubble ${message.role === "user" ? "user" : "assistant"}`}
+                            key={index}
+                          >
+                            <span className="chat-role">
+                              {message.role === "user" ? "我" : "AI"}
+                            </span>
+                            {parsed ? (
+                              <StoredAnswerView data={parsed} />
+                            ) : (
+                              <p>{message.content}</p>
+                            )}
+                          </div>
+                        );
+                      })
                     ) : (
                       <div className="profile-empty">暂无记录</div>
                     )}

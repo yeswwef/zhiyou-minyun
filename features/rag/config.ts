@@ -14,6 +14,10 @@ export function config() {
     key: process.env.RAG_API_KEY || process.env.DASHSCOPE_API_KEY || "",
     base: (process.env.RAG_MODEL_BASE_URL || process.env.DASHSCOPE_BASE_URL || "").replace(/\/$/, ""),
     model: process.env.LLM_MODEL || "qwen-plus",
+    // 辅助环节模型：核验需要稳定 JSON，继续用主模型（关闭思考后明显变快）；追问用快模型。
+    fastModel: process.env.RAG_FAST_MODEL || process.env.LLM_MODEL || "qwen-plus",
+    auditModel: process.env.RAG_AUDIT_MODEL || process.env.LLM_MODEL || "qwen-plus",
+    followupModel: process.env.RAG_FOLLOWUP_MODEL || process.env.RAG_FAST_MODEL || process.env.LLM_MODEL || "qwen-plus",
     // 视觉模型必须单独配置：文本模型（qwen-plus）看不到图片，实测会把纯红图答成蓝色。
     // 2026-10-21 修正：识景此前误用 model，导致识别结果恒为「未知」。
     vl: process.env.VL_MODEL || "qwen3-vl-plus",

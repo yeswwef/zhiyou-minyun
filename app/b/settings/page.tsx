@@ -13,6 +13,11 @@ type MeUser = {
   nickname: string | null;
   role: "C" | "B";
   merchantName: string | null;
+  merchantAddress: string | null;
+  legalPerson: string | null;
+  merchantPhone: string | null;
+  creditCode: string | null;
+  merchantIntro: string | null;
   createdAt: string;
 };
 
@@ -26,6 +31,11 @@ export default function MerchantSettingsPage() {
 
   const [nickname, setNickname] = useState("");
   const [merchantName, setMerchantName] = useState("");
+  const [merchantAddress, setMerchantAddress] = useState("");
+  const [legalPerson, setLegalPerson] = useState("");
+  const [merchantPhone, setMerchantPhone] = useState("");
+  const [creditCode, setCreditCode] = useState("");
+  const [merchantIntro, setMerchantIntro] = useState("");
   const [profileMsg, setProfileMsg] = useState("");
   const [profileErr, setProfileErr] = useState("");
   const [profileBusy, setProfileBusy] = useState(false);
@@ -44,6 +54,11 @@ export default function MerchantSettingsPage() {
         setUser(payload.user);
         setNickname(payload.user?.nickname ?? "");
         setMerchantName(payload.user?.merchantName ?? "");
+        setMerchantAddress(payload.user?.merchantAddress ?? "");
+        setLegalPerson(payload.user?.legalPerson ?? "");
+        setMerchantPhone(payload.user?.merchantPhone ?? "");
+        setCreditCode(payload.user?.creditCode ?? "");
+        setMerchantIntro(payload.user?.merchantIntro ?? "");
       })
       .catch(() => setUser(null))
       .finally(() => setChecked(true));
@@ -61,7 +76,14 @@ export default function MerchantSettingsPage() {
     setProfileBusy(true);
 
     const body: Record<string, string> = { nickname };
-    if (user?.role === "B") body.merchantName = merchantName;
+    if (user?.role === "B") {
+      body.merchantName = merchantName;
+      body.merchantAddress = merchantAddress;
+      body.legalPerson = legalPerson;
+      body.merchantPhone = merchantPhone;
+      body.creditCode = creditCode;
+      body.merchantIntro = merchantIntro;
+    }
 
     const response = await fetch("/api/auth/me", {
       method: "PATCH",
@@ -75,6 +97,11 @@ export default function MerchantSettingsPage() {
       setUser(payload.user);
       setNickname(payload.user.nickname ?? "");
       setMerchantName(payload.user.merchantName ?? "");
+      setMerchantAddress(payload.user.merchantAddress ?? "");
+      setLegalPerson(payload.user.legalPerson ?? "");
+      setMerchantPhone(payload.user.merchantPhone ?? "");
+      setCreditCode(payload.user.creditCode ?? "");
+      setMerchantIntro(payload.user.merchantIntro ?? "");
       setProfileMsg("资料已更新");
     } else {
       setProfileErr(payload.error ?? "更新失败");
@@ -159,19 +186,53 @@ export default function MerchantSettingsPage() {
 
       <section className="rounded-xl border border-stone-200 bg-white p-5">
         <h2 className="text-sm font-semibold">店铺信息</h2>
-        <form onSubmit={saveProfile} className="mt-4 grid max-w-lg gap-4">
+        <form onSubmit={saveProfile} className="mt-4 grid max-w-2xl gap-4">
           {user.role === "B" ? (
-            <label>
-              <span className="mb-1 block text-xs text-stone-500">
-                店铺 / 工作室名称
-              </span>
-              <input
-                className="input"
-                value={merchantName}
-                onChange={(event) => setMerchantName(event.target.value)}
-                placeholder="如：福州三坊七巷文创店"
-              />
-            </label>
+            <>
+              <label>
+                <span className="mb-1 block text-xs text-stone-500">
+                  店铺 / 工作室名称
+                </span>
+                <input
+                  className="input"
+                  value={merchantName}
+                  onChange={(event) => setMerchantName(event.target.value)}
+                  placeholder="如：福州三坊七巷文创店"
+                />
+              </label>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <label>
+                  <span className="mb-1 block text-xs text-stone-500">法定代表人 / 负责人</span>
+                  <input className="input" value={legalPerson} onChange={(event) => setLegalPerson(event.target.value)} placeholder="如：林守艺" />
+                </label>
+                <label>
+                  <span className="mb-1 block text-xs text-stone-500">联系电话</span>
+                  <input className="input" value={merchantPhone} onChange={(event) => setMerchantPhone(event.target.value)} placeholder="如：0591-87654321" />
+                </label>
+              </div>
+
+              <label>
+                <span className="mb-1 block text-xs text-stone-500">经营地址</span>
+                <input className="input" value={merchantAddress} onChange={(event) => setMerchantAddress(event.target.value)} placeholder="如：福州市鼓楼区南后街 88 号" />
+              </label>
+
+              <label>
+                <span className="mb-1 block text-xs text-stone-500">统一社会信用代码</span>
+                <input className="input" value={creditCode} onChange={(event) => setCreditCode(event.target.value)} placeholder="18 位统一社会信用代码" />
+              </label>
+
+              <label>
+                <span className="mb-1 block text-xs text-stone-500">店铺 / 工作室简介</span>
+                <textarea
+                  className="input min-h-28 py-3"
+                  value={merchantIntro}
+                  onChange={(event) => setMerchantIntro(event.target.value)}
+                  placeholder="介绍你的手艺、产品与体验课程，最多 400 字"
+                  maxLength={400}
+                />
+              </label>
+            </>
           ) : (
             <p className="rounded-lg bg-stone-50 px-3 py-2 text-xs text-stone-500">
               当前是游客账号。如需开店 / 开工作室，请用商户身份重新注册一个账号。

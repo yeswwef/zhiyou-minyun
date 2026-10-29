@@ -56,21 +56,21 @@ export default function AdminBookingsPage() {
           {message && <p className="admin-verify-message">{message}</p>}
         </form>
         <div className="grid grid-cols-2 gap-3">
-          <div className="admin-panel flex items-center gap-3 p-4"><i className="grid h-10 w-10 place-items-center rounded-xl bg-[#fbf0df] text-[#b8792b]"><Clock3 size={19}/></i><span><small className="block text-[9px] text-[#948b82]">待核销</small><b className="text-2xl">{counts.CONFIRMED}</b></span></div>
-          <div className="admin-panel flex items-center gap-3 p-4"><i className="grid h-10 w-10 place-items-center rounded-xl bg-[#e9f3eb] text-[#4f7d5c]"><CheckCircle2 size={19}/></i><span><small className="block text-[9px] text-[#948b82]">已核销</small><b className="text-2xl">{counts.VERIFIED}</b></span></div>
-          <div className="admin-panel col-span-2 flex items-center gap-3 p-4"><i className="grid h-10 w-10 place-items-center rounded-xl bg-[#e9f1ef] text-[#315f58]"><Users size={19}/></i><span><small className="block text-[9px] text-[#948b82]">累计预约人数</small><b className="text-2xl">{items.reduce((sum, item) => sum + item.quantity, 0)} <em className="text-[10px] not-italic font-normal text-[#948b82]">人次</em></b></span></div>
+          <div className="admin-panel flex items-center gap-3 p-4"><i className="grid h-10 w-10 place-items-center rounded-xl bg-[#fbf0df] text-[#b8792b]"><Clock3 size={19}/></i><span><small className="block text-[9.9px] text-[#948b82]">待核销</small><b className="text-2xl">{counts.CONFIRMED}</b></span></div>
+          <div className="admin-panel flex items-center gap-3 p-4"><i className="grid h-10 w-10 place-items-center rounded-xl bg-[#e9f3eb] text-[#4f7d5c]"><CheckCircle2 size={19}/></i><span><small className="block text-[9.9px] text-[#948b82]">已核销</small><b className="text-2xl">{counts.VERIFIED}</b></span></div>
+          <div className="admin-panel col-span-2 flex items-center gap-3 p-4"><i className="grid h-10 w-10 place-items-center rounded-xl bg-[#e9f1ef] text-[#315f58]"><Users size={19}/></i><span><small className="block text-[9.9px] text-[#948b82]">累计预约人数</small><b className="text-2xl">{items.reduce((sum, item) => sum + item.quantity, 0)} <em className="text-[11px] not-italic font-normal text-[#948b82]">人次</em></b></span></div>
         </div>
       </div>
 
       <section className="admin-panel mt-5 p-0 overflow-hidden">
         <div className="flex flex-wrap items-center gap-3 border-b border-[#eee5da] px-5 py-4">
-          <div className="flex flex-wrap gap-2">{filters.map(([value, label]) => <button key={value} onClick={() => setFilter(value)} className={`rounded-lg px-3 py-2 text-[10px] transition ${filter === value ? "bg-[#173330] text-white" : "bg-[#f4efe8] text-[#746c64]"}`}>{label}{value !== "ALL" && <span className="ml-1 opacity-60">{counts[value] ?? 0}</span>}</button>)}</div>
+          <div className="flex flex-wrap gap-2">{filters.map(([value, label]) => <button key={value} onClick={() => setFilter(value)} className={`rounded-lg px-3 py-2 text-[11px] transition ${filter === value ? "bg-[#173330] text-white" : "bg-[#f4efe8] text-[#746c64]"}`}>{label}{value !== "ALL" && <span className="ml-1 opacity-60">{counts[value] ?? 0}</span>}</button>)}</div>
           <label className="ml-auto flex h-10 min-w-[280px] items-center gap-2 rounded-lg border border-[#e2d8cc] bg-[#fffdfa] px-3"><Search size={15} className="text-[#999188]"/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="搜索预约单号、联系人或项目" className="w-full bg-transparent text-xs outline-none"/></label>
         </div>
         <div className="overflow-x-auto">
           <table className="admin-booking-table">
-            <thead><tr><th>预约项目</th><th>游客与联系人</th><th>预约时段</th><th>人数</th><th>核销码</th><th>状态</th></tr></thead>
-            <tbody>{filtered.map((item) => <tr key={item.id}><td><b>{item.slot.ticketItem.title}</b><small>{item.slot.ticketItem.venue.name}<br/>{item.bookingNo}</small></td><td>{item.user.nickname || item.user.username}<small>{item.contactName} · {item.contactPhone}</small></td><td>{new Date(item.slot.startAt).toLocaleString("zh-CN")}</td><td>{item.quantity}</td><td><code>{item.verifyCode}</code></td><td><span className={`admin-booking-status ${item.status.toLowerCase()}`}>{item.status === "VERIFIED" && <CheckCircle2 size={12}/>} {labels[item.status] ?? item.status}</span></td></tr>)}</tbody>
+            <thead><tr><th>预约项目</th><th>游客与联系人</th><th>预约时段</th><th>人数</th><th>核销方式</th><th>状态</th></tr></thead>
+            <tbody>{filtered.map((item) => <tr key={item.id}><td><b>{item.slot.ticketItem.title}</b><small>{item.slot.ticketItem.venue.name}<br/>{item.bookingNo}</small></td><td>{item.user.nickname || item.user.username}<small>{item.contactName} · {item.contactPhone}</small></td><td>{new Date(item.slot.startAt).toLocaleString("zh-CN")}</td><td>{item.quantity}</td><td><small>顾客到店出示核销码</small></td><td><span className={`admin-booking-status ${item.status.toLowerCase()}`}>{item.status === "VERIFIED" && <CheckCircle2 size={12}/>} {labels[item.status] ?? item.status}</span></td></tr>)}</tbody>
           </table>
           {!filtered.length && <p className="py-16 text-center text-xs text-[#9c948b]">没有符合条件的预约记录</p>}
         </div>

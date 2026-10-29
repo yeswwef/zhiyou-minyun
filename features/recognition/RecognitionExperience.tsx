@@ -1,6 +1,6 @@
 /**
  * @module-note features/recognition/RecognitionExperience.tsx
- * AI 多模态识景展示层：上传照片、压缩预览、调用识景接口并展示带来源的讲解。
+ * AI 图片识景展示层：上传照片、压缩预览、调用识景接口并展示带来源的讲解。
  */
 /* eslint-disable @next/next/no-img-element */
 "use client";
@@ -129,7 +129,7 @@ export function RecognitionExperience() {
 
       <main className={s.main}>
         <section className={s.hero}>
-          <p className={s.kicker}>AI VISION · 多模态识景</p>
+          <p className={s.kicker}>AI VISION · 图片识景</p>
           <h1>拍一张照片，<em>读懂福州</em></h1>
           <p className={s.lead}>上传福州任意景点照片，系统自动识别对象，并给出历史背景、非遗知识点与可查来源。</p>
           <div className={s.tags}><span>福州景点</span><span>自然景观</span></div>

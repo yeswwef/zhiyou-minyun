@@ -1,4 +1,4 @@
-/**
+﻿﻿﻿﻿/**
  * @module-note prisma/seed-tickets.ts
  * 数据库初始化脚本：用于开发演示数据，运行会写入数据库，不能当作只读检查。
  */
@@ -24,8 +24,14 @@ const dayAt = (days: number, hour: number) => {
 async function main() {
   const admin = await prisma.user.upsert({
     where: { username: "demo_admin" },
-    update: { role: "ADMIN", nickname: "票务管理员" },
-    create: { username: "demo_admin", nickname: "票务管理员", passwordHash: hashPassword("demo123456"), role: "ADMIN" },
+    update: { role: "ADMIN", nickname: "平台管理员" },
+    create: { username: "demo_admin", nickname: "平台管理员", passwordHash: hashPassword("demo123456"), role: "ADMIN" },
+  });
+
+  await prisma.user.upsert({
+    where: { username: "demo_ticket" },
+    update: { role: "TICKET_ADMIN", nickname: "景点管理员", passwordHash: hashPassword("demo123456") },
+    create: { username: "demo_ticket", nickname: "景点管理员", passwordHash: hashPassword("demo123456"), role: "TICKET_ADMIN" },
   });
 
   const venueSeeds = [
@@ -58,7 +64,64 @@ async function main() {
       }
     }
   }
-  console.log("票务演示数据已写入：admin demo_admin / demo123456");
+  // 演示预约：让管理端的预约核销页有可查询、可核销的真实记录。
+  const buyers = await prisma.user.findMany({
+    where: { username: { in: ["demo_buyer_chen", "demo_buyer_lin", "demo_buyer_su", "demo_lin", "demo_arong"] } },
+    select: { id: true, username: true, nickname: true },
+  });
+  const slots = await prisma.ticketSlot.findMany({
+    where: { startAt: { gt: new Date() } },
+    orderBy: { startAt: "asc" },
+    take: 12,
+    select: { id: true, capacity: true, bookedCount: true },
+  });
+  const bookingSeeds = [
+    { id: "demo-booking-1", bookingNo: "ZY-DEMO-001", verifyCode: "573901", username: "demo_buyer_chen", quantity: 2, contactName: "陈小雨", contactPhone: "13800001234", status: "CONFIRMED" as const },
+    { id: "demo-booking-2", bookingNo: "ZY-DEMO-002", verifyCode: "284615", username: "demo_buyer_lin", quantity: 3, contactName: "林海", contactPhone: "13900002345", status: "VERIFIED" as const },
+    { id: "demo-booking-3", bookingNo: "ZY-DEMO-003", verifyCode: "638204", username: "demo_buyer_su", quantity: 1, contactName: "苏文", contactPhone: "13700005678", status: "CONFIRMED" as const },
+    { id: "demo-booking-4", bookingNo: "ZY-DEMO-004", verifyCode: "915732", username: "demo_buyer_chen", quantity: 2, contactName: "陈小雨", contactPhone: "13800001234", status: "VERIFIED" as const },
+    { id: "demo-booking-5", bookingNo: "ZY-DEMO-005", verifyCode: "407318", username: "demo_buyer_lin", quantity: 1, contactName: "林海", contactPhone: "13900002345", status: "CANCELLED" as const },
+    { id: "demo-booking-6", bookingNo: "ZY-DEMO-006", verifyCode: "760541", username: "demo_buyer_su", quantity: 2, contactName: "苏文", contactPhone: "13700005678", status: "CONFIRMED" as const },
+    { id: "demo-booking-7", bookingNo: "ZY-DEMO-007", verifyCode: "318467", username: "demo_buyer_chen", quantity: 2, contactName: "陈小雨", contactPhone: "13800001234", status: "CONFIRMED" as const },
+    { id: "demo-booking-8", bookingNo: "ZY-DEMO-008", verifyCode: "502984", username: "demo_buyer_lin", quantity: 1, contactName: "林海", contactPhone: "13900002345", status: "VERIFIED" as const },
+    { id: "demo-booking-9", bookingNo: "ZY-DEMO-009", verifyCode: "641073", username: "demo_buyer_su", quantity: 2, contactName: "苏文", contactPhone: "13700005678", status: "CONFIRMED" as const },
+    { id: "demo-booking-10", bookingNo: "ZY-DEMO-010", verifyCode: "829516", username: "demo_buyer_chen", quantity: 1, contactName: "陈小雨", contactPhone: "13800001234", status: "CANCELLED" as const },
+    { id: "demo-booking-11", bookingNo: "ZY-DEMO-011", verifyCode: "374915", username: "demo_lin", quantity: 2, contactName: "林同学", contactPhone: "13600007890", status: "CONFIRMED" as const },
+    { id: "demo-booking-12", bookingNo: "ZY-DEMO-012", verifyCode: "806247", username: "demo_arong", quantity: 1, contactName: "阿榕", contactPhone: "13500008901", status: "VERIFIED" as const },
+  ];
+  for (let index = 0; index < bookingSeeds.length; index += 1) {
+    const seed = bookingSeeds[index];
+    const buyer = buyers.find((item) => item.username === seed.username);
+    const slot = slots[index];
+    if (!buyer || !slot) continue;
+    const exists = await prisma.ticketBooking.findUnique({ where: { id: seed.id }, select: { id: true } });
+    if (exists) continue;
+    await prisma.ticketBooking.create({
+      data: {
+        id: seed.id,
+        bookingNo: seed.bookingNo,
+        verifyCode: seed.verifyCode,
+        userId: buyer.id,
+        slotId: slot.id,
+        quantity: seed.quantity,
+        contactName: seed.contactName,
+        contactPhone: seed.contactPhone,
+        status: seed.status,
+        verifiedAt: seed.status === "VERIFIED" ? new Date() : null,
+        cancelledAt: seed.status === "CANCELLED" ? new Date() : null,
+      },
+    });
+    // 取消的预约不占用场次容量。
+    if (seed.status !== "CANCELLED") {
+      await prisma.ticketSlot.update({
+        where: { id: slot.id },
+        data: { bookedCount: { increment: seed.quantity } },
+      });
+    }
+  }
+
+  console.log("票务演示数据已写入：平台管理员 demo_admin / demo123456；景点管理员 demo_ticket / demo123456");
 }
 
 main().finally(() => prisma.$disconnect());
+

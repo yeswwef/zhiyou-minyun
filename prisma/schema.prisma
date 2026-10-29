@@ -19,7 +19,8 @@ datasource db {
 enum Role {
   C // C 端游客
   B // B 端商户 / 非遗传承人
-  ADMIN // 平台后台管理员
+  ADMIN // 平台管理员：治理、内容、交易、AI 与系统
+  TICKET_ADMIN // 景点管理员：场馆、票务、预约核销与应急服务
 }
 
 /// 场馆类型。
@@ -115,6 +116,12 @@ model User {
   passwordHash       String
   role               Role                    @default(C)
   merchantName       String? // B 端店铺名
+  merchantAddress    String? // 商户经营地址
+  legalPerson        String? // 商户法定代表人 / 负责人
+  merchantPhone      String? // 商户联系电话
+  creditCode         String? // 统一社会信用代码
+  merchantIntro      String? @db.Text // 商户 / 工作室简介
+  disabledAt         DateTime? // 非空表示账号已被平台注销，登录与会话立即失效
   createdAt          DateTime                @default(now())
   favorites          Favorite[]
   trips              Trip[]
@@ -212,6 +219,15 @@ model Trip {
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+/// 行程分享快照：AI 定制路线生成只读链接，读取时无需登录。
+model SharedPlan {
+  id        String   @id @default(cuid())
+  plan      Json
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
 }
 
 // ---------- 浏览足迹 ----------
