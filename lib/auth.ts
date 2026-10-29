@@ -80,24 +80,36 @@ export function verifySessionToken(token: string): { userId: string } | null {
   }
 }
 
-/** 从请求 cookie 中解析当前登录用户 id（未登录返回 null） */
+/** 从请求 cookie 中解析当前登录用户 id（未登录或账号已注销返回 null） */
 export async function getSessionUserId(): Promise<string | null> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE_NAME)?.value;
   if (!token) return null;
-  return verifySessionToken(token)?.userId ?? null;
+  const userId = verifySessionToken(token)?.userId ?? null;
+  if (!userId) return null;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { disabledAt: true },
+  });
+  return user && !user.disabledAt ? userId : null;
 }
 
 export type SessionUser = {
   id: string;
   username: string;
   nickname: string | null;
-  role: "C" | "B" | "ADMIN";
+  role: "C" | "B" | "ADMIN" | "TICKET_ADMIN";
   merchantName: string | null;
+  merchantAddress: string | null;
+  legalPerson: string | null;
+  merchantPhone: string | null;
+  creditCode: string | null;
+  merchantIntro: string | null;
+  disabledAt: Date | null;
   createdAt: Date;
 };
 
-/** 获取当前登录用户（未登录返回 null） */
+/** 获取当前登录用户（未登录或账号已注销返回 null） */
 export async function getSessionUser(): Promise<SessionUser | null> {
   const userId = await getSessionUserId();
   if (!userId) return null;
@@ -109,6 +121,12 @@ export async function getSessionUser(): Promise<SessionUser | null> {
       nickname: true,
       role: true,
       merchantName: true,
+      merchantAddress: true,
+      legalPerson: true,
+      merchantPhone: true,
+      creditCode: true,
+      merchantIntro: true,
+      disabledAt: true,
       createdAt: true,
     },
   });

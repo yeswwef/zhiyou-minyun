@@ -10,13 +10,14 @@ import { useRouter } from "next/navigation";
 import { BrandMark } from "@/components/BrandMark";
 
 type Mode = "login" | "register";
-type Endpoint = "guest" | "merchant" | "admin";
+type Endpoint = "guest" | "merchant" | "admin" | "ticket";
 
-/** 三端登录：选择身份，登录后进入对应端 */
+/** 四端登录：选择身份，登录后进入对应端 */
 const ENDPOINTS: Array<{ value: Endpoint; label: string; href: string }> = [
   { value: "guest", label: "游客端", href: "/home" },
   { value: "merchant", label: "商户端", href: "/b/dashboard" },
-  { value: "admin", label: "管理员", href: "/admin/dashboard" },
+  { value: "admin", label: "平台管理员", href: "/admin/dashboard" },
+  { value: "ticket", label: "景点管理员", href: "/admin/tickets" },
 ];
 
 /** 注册时可选择的身份 */
@@ -55,12 +56,14 @@ export default function LoginPage() {
   useEffect(() => {
     const requested = new URLSearchParams(window.location.search).get("endpoint");
     const requestedEndpoint: Endpoint =
-      requested === "admin" || requested === "merchant" ? requested : "guest";
+      requested === "admin" || requested === "ticket" || requested === "merchant" ? requested : "guest";
     fetch("/api/auth/me")
       .then((response) => response.json())
-      .then((payload: { user: { role: "C" | "B" | "ADMIN" } | null }) => {
+      .then((payload: { user: { role: "C" | "B" | "ADMIN" | "TICKET_ADMIN" } | null }) => {
         setEndpoint(requestedEndpoint);
-        const expectedRole = requestedEndpoint === "admin" ? "ADMIN" : requestedEndpoint === "merchant" ? "B" : "C";
+        const expectedRole = requestedEndpoint === "admin" ? "ADMIN"
+          : requestedEndpoint === "ticket" ? "TICKET_ADMIN"
+            : requestedEndpoint === "merchant" ? "B" : "C";
         if (payload.user?.role === expectedRole) {
           const endpointHome = ENDPOINTS.find((item) => item.value === requestedEndpoint)!.href;
           router.replace(nextPath() ?? endpointHome);

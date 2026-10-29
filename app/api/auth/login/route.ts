@@ -35,7 +35,13 @@ export async function POST(request: NextRequest) {
       { status: 401 },
     );
   }
-  const expectedRole = endpoint === "admin" ? "ADMIN" : endpoint === "merchant" ? "B" : endpoint === "guest" ? "C" : null;
+  if (user.disabledAt) {
+    return NextResponse.json(
+      { ok: false, error: "该账号已被平台注销，请联系管理员" },
+      { status: 403 },
+    );
+  }
+  const expectedRole = endpoint === "admin" ? "ADMIN" : endpoint === "ticket" ? "TICKET_ADMIN" : endpoint === "merchant" ? "B" : endpoint === "guest" ? "C" : null;
   if (expectedRole && user.role !== expectedRole) {
     return NextResponse.json({ ok: false, error: "账号身份与所选登录端不匹配" }, { status: 403 });
   }

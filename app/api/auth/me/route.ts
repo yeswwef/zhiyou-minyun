@@ -12,6 +12,11 @@ const userSelect = {
   nickname: true,
   role: true,
   merchantName: true,
+  merchantAddress: true,
+  legalPerson: true,
+  merchantPhone: true,
+  creditCode: true,
+  merchantIntro: true,
   createdAt: true,
 } as const;
 
@@ -32,7 +37,15 @@ export async function PATCH(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
-  const data: { nickname?: string | null; merchantName?: string } = {};
+  const data: {
+    nickname?: string | null;
+    merchantName?: string;
+    merchantAddress?: string | null;
+    legalPerson?: string | null;
+    merchantPhone?: string | null;
+    creditCode?: string | null;
+    merchantIntro?: string | null;
+  } = {};
 
   if (body?.nickname !== undefined) {
     const nickname = String(body.nickname ?? "").trim();
@@ -45,31 +58,49 @@ export async function PATCH(request: NextRequest) {
     data.nickname = nickname || null;
   }
 
-  if (body?.merchantName !== undefined) {
+  const merchantFields = ["merchantName", "merchantAddress", "legalPerson", "merchantPhone", "creditCode", "merchantIntro"] as const;
+  if (merchantFields.some((field) => body?.[field] !== undefined)) {
     const current = await prisma.user.findUnique({
       where: { id: userId },
       select: { role: true },
     });
     if (current?.role !== "B") {
       return NextResponse.json(
-        { ok: false, error: "仅商户账号可修改店铺名称" },
+        { ok: false, error: "仅商户账号可修改店铺资料" },
         { status: 400 },
       );
     }
-    const merchantName = String(body.merchantName ?? "").trim();
-    if (!merchantName) {
+
+    if (body?.merchantName !== undefined) {
+      const merchantName = String(body.merchantName ?? "").trim();
+      if (!merchantName) {
+        return NextResponse.json({ ok: false, error: "店铺 / 工作室名称不能为空" }, { status: 400 });
+      }
+      if (merchantName.length > 50) {
+        return NextResponse.json({ ok: false, error: "店铺名称不能超过 50 个字符" }, { status: 400 });
+      }
+      data.merchantName = merchantName;
+    }
+
+    const optionalText = (field: "merchantAddress" | "legalPerson" | "merchantPhone" | "creditCode" | "merchantIntro", max: number, label: string) => {
+      if (body?.[field] === undefined) return;
+      const value = String(body[field] ?? "").trim();
+      if (value.length > max) throw new Error(`${label}不能超过 ${max} 个字符`);
+      data[field] = value || null;
+    };
+
+    try {
+      optionalText("merchantAddress", 100, "经营地址");
+      optionalText("legalPerson", 30, "法定代表人");
+      optionalText("merchantPhone", 30, "联系电话");
+      optionalText("creditCode", 30, "统一社会信用代码");
+      optionalText("merchantIntro", 400, "店铺简介");
+    } catch (error) {
       return NextResponse.json(
-        { ok: false, error: "店铺 / 工作室名称不能为空" },
+        { ok: false, error: error instanceof Error ? error.message : "资料格式不正确" },
         { status: 400 },
       );
     }
-    if (merchantName.length > 50) {
-      return NextResponse.json(
-        { ok: false, error: "店铺名称不能超过 50 个字符" },
-        { status: 400 },
-      );
-    }
-    data.merchantName = merchantName;
   }
 
   if (!Object.keys(data).length) {
