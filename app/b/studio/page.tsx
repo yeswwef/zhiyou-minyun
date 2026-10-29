@@ -461,7 +461,7 @@ export default function MerchantStudioPage() {
                     <tr key={item.id} className="border-t border-stone-100">
                       <td className="px-4 py-3">
                         <span className="font-medium">{item.title}</span>
-                        <p className="mt-1 max-w-xs text-[11px] text-stone-400">{item.summary}</p>
+                        <p className="mt-1 max-w-xs text-[12.1px] text-stone-400">{item.summary}</p>
                       </td>
                       <td className="px-4 py-3 text-stone-500">{item.schedule}</td>
                       <td className="px-4 py-3 text-right">{formatPrice(item.price)}</td>

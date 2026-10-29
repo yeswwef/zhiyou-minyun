@@ -29,7 +29,7 @@ const COMMUNITY_MENU = [
   { href: "/home#ask", label: "AI文化问答", icon: MessageCircle },
   { href: "/plan", label: "旅游行程规划", icon: Route },
   { href: "/resources", label: "文旅资源中心", icon: Map },
-  { href: "/recognition", label: "AI多模态识景", icon: ScanLine },
+  { href: "/recognition", label: "AI图片识景", icon: ScanLine },
   { href: "/home#tickets", label: "票务预约", icon: Ticket },
   { href: "/help", label: "便民与应急", icon: ShieldCheck },
   { href: "/home#shop", label: "文旅商品购买", icon: ShoppingBag },

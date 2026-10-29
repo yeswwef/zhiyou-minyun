@@ -17,7 +17,7 @@ async function post(url: string, payload: unknown) {
   if (!c.key) throw new Error("MODEL_NOT_CONFIGURED");
   const response = await fetch(url, {
     method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${c.key}` },
-    body: JSON.stringify(payload), signal: AbortSignal.timeout(20000), cache: "no-store",
+    body: JSON.stringify(payload), signal: AbortSignal.timeout(60000), cache: "no-store",
   });
   if (!response.ok) throw new Error(`MODEL_HTTP_${response.status}`);
   return response.json();
@@ -34,18 +34,28 @@ export function modelReady() { const c = config(); return Boolean(c.key && c.bas
  */
 export async function chat(system: string, messages: Message[], onDelta?: (text: string) => void): Promise<string> {
   const purpose=system.includes("生成后续问题")?"followups.generate":system.includes("只还原指代")?"context.resolve":system.includes("证据审查员")?"evidence.audit":system.includes("独立审核")?"validation.semantic":system.includes("补充回答")?"supplement":"generation";
-  return logged(purpose,{model:config().model,streaming:Boolean(onDelta)},()=>chatInternal(system,messages,onDelta));
+  const c = config();
+  // 核验与追问用独立模型并限制输出长度；只有正文生成用主模型。
+  const fast = purpose !== "generation" && purpose !== "supplement";
+  const model = purpose === "evidence.audit" ? c.auditModel
+    : purpose === "followups.generate" ? c.followupModel
+      : fast ? c.fastModel : c.model;
+  const maxTokens = purpose === "followups.generate" ? 500 : purpose === "evidence.audit" ? 1200 : purpose === "context.resolve" ? 300 : 2000;
+  return logged(purpose,{model,streaming:Boolean(onDelta)},()=>chatInternal(system,messages,onDelta,model,maxTokens));
 }
 /**
  * 执行聊天接口调用，按配置解析普通结果或 SSE 增量内容。
  * 输入：system、messages、onDelta；类型与可选项见函数签名。
  */
-async function chatInternal(system: string, messages: Message[], onDelta?: (text: string) => void): Promise<string> {
+async function chatInternal(system: string, messages: Message[], onDelta?: (text: string) => void, model = config().model, maxTokens = 2000): Promise<string> {
   const c = config();
   if (onDelta) {
     const response = await fetch(`${c.base}/chat/completions`, {
       method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${c.key}` },
-      body: JSON.stringify({ model: c.model, temperature: 0, max_tokens: 2000, stream: true, messages: [{ role: "system", content: system }, ...messages] }),
+      body: JSON.stringify({
+        model, temperature: 0, max_tokens: maxTokens, stream: true, enable_thinking: false,
+        messages: [{ role: "system", content: system }, ...messages],
+      }),
       signal: AbortSignal.timeout(60000), cache: "no-store",
     });
     if (!response.ok) throw new Error(`MODEL_HTTP_${response.status}`);
@@ -62,7 +72,7 @@ async function chatInternal(system: string, messages: Message[], onDelta?: (text
     return text;
   }
   const data = await post(`${c.base}/chat/completions`, {
-    model: c.model, temperature: 0, max_tokens: 2000,
+    model, temperature: 0, max_tokens: maxTokens, enable_thinking: false,
     messages: [{ role: "system", content: system }, ...messages],
   });
   const content = data?.choices?.[0]?.message?.content;
@@ -134,7 +144,7 @@ async function rerankInternal(query: string, documents: string[]): Promise<{ ind
   });
 }
 
-/** 与 post 相同的 JSON 请求，但允许自定义超时；供多模态识图与结构化生成使用。 */
+/** 与 post 相同的 JSON 请求，但允许自定义超时；供图片识景与结构化生成使用。 */
 async function postModel(url: string, payload: unknown, timeoutMs = 60000) {
   const c = config();
   if (!c.key) throw new Error("MODEL_NOT_CONFIGURED");
@@ -147,7 +157,7 @@ async function postModel(url: string, payload: unknown, timeoutMs = 60000) {
 }
 
 /**
- * 调用多模态模型识别图片，要求返回结构化 JSON 文本。
+ * 调用视觉模型识别图片，要求返回结构化 JSON 文本。
  * 输入：system、prompt、imageUrl；类型与可选项见函数签名。
  */
 export async function chatVision(system: string, prompt: string, imageUrl: string): Promise<string> {

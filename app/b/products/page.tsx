@@ -337,7 +337,7 @@ export default function MerchantProductsPage() {
                 }}
               />
               <div className="flex flex-1 flex-col gap-2 p-4">
-                <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center justify-between text-[12.1px]">
                   <span className="text-brand">{productCategoryLabel(product.category)}</span>
                   <span
                     className={
@@ -353,7 +353,7 @@ export default function MerchantProductsPage() {
                   <span className="text-brand font-semibold">
                     {formatPrice(product.price)}
                   </span>
-                  <span className="text-[11px] text-stone-400">
+                  <span className="text-[12.1px] text-stone-400">
                     库存 {product.stock} · 订单 {product.orderCount}
                   </span>
                 </div>

@@ -188,7 +188,7 @@ export default function MerchantOrdersPage() {
             <tbody>
               {orders.map((order) => (
                 <tr key={order.id} className="border-t border-stone-100">
-                  <td className="px-4 py-3 font-mono text-[11px] text-stone-500">
+                  <td className="px-4 py-3 font-mono text-[12.1px] text-stone-500">
                     {order.orderNo}
                   </td>
                   <td className="px-4 py-3">{order.product.title}</td>

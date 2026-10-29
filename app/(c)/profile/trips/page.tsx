@@ -239,7 +239,11 @@ export default function TripsPage() {
                     {trip.items.length ? (
                       trip.items.map((item, index) => (
                         <div className="trip-item" key={`${item.resourceId}-${index}`}>
-                          <Link href={`/resources/${item.resourceId}`}>{item.title}</Link>
+                          {item.resourceId.startsWith("plan:") ? (
+                            <span>{item.title}</span>
+                          ) : (
+                            <Link href={`/resources/${item.resourceId}`}>{item.title}</Link>
+                          )}
                           <button
                             className="icon-btn danger"
                             onClick={() => removeItem(trip.id, item.resourceId)}

@@ -89,7 +89,7 @@ export default function MyOrdersPage() {
                 />
                 <div className="min-w-48 flex-1">
                   <p className="text-sm font-medium">{order.product.title}</p>
-                  <p className="mt-1 font-mono text-[11px] text-stone-400">
+                  <p className="mt-1 font-mono text-[12.1px] text-stone-400">
                     {order.orderNo}
                   </p>
                 </div>

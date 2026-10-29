@@ -9,7 +9,7 @@ const FEATURE_CONTENT: Record<string, { title: string; eyebrow: string; descript
   profile: { title: "用户中心", eyebrow: "MY FUZHOU", description: "管理个人资料、收藏内容与旅行偏好。" },
   assistant: { title: "AI文化问答", eyebrow: "AI CULTURE", description: "了解福州历史、街巷故事与本地文化。" },
   planner: { title: "旅游行程规划", eyebrow: "TRIP PLANNER", description: "根据时间与兴趣安排一份合适的福州行程。" },
-  recognition: { title: "AI多模态识景", eyebrow: "AI RECOGNITION", description: "识别眼前景物，快速获取相关介绍。" },
+  recognition: { title: "AI图片识景", eyebrow: "AI RECOGNITION", description: "识别眼前景物，快速获取相关介绍。" },
   tickets: { title: "票务预约", eyebrow: "TICKETS", description: "查看景区门票与活动预约信息。" },
   help: { title: "便民与应急", eyebrow: "TRAVEL HELP", description: "查找厕所、停车、充电、医疗与天气预警。" },
   shop: { title: "文旅商品购买", eyebrow: "LOCAL GOODS", description: "选购福州好物，支持现场取货或快递到家。" },
